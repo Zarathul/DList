@@ -181,6 +181,24 @@ namespace InCoding.DList
             //Console.WriteLine("CR: {0} vs {1}", ContentRectangle, (Items.Count + 1) * ItemHeight);
         }
 
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            if (HotColumnIndex >= 0)
+            {
+                PressedColumnIndex = HotColumnIndex;
+                HotColumnIndex = -1;
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            if (PressedColumnIndex >= 0)
+            {
+                HotColumnIndex = PressedColumnIndex;
+                PressedColumnIndex = -1;
+            }
+        }
+
         protected override void OnMouseClick(MouseEventArgs e)
         {
             // TODO: remove
@@ -199,13 +217,16 @@ namespace InCoding.DList
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            int ContentX = e.X + HScroll.Value;
-            int ContentY = e.Y + VScroll.Value;
-            HotItemIndex = GetItemIndexAt(ContentX, ContentY);
-            HotColumnIndex = GetColumnIndexAt(ContentX, ContentY);
+            if (e.Button == MouseButtons.None)
+            {
+                int ContentX = e.X + HScroll.Value;
+                int ContentY = e.Y + VScroll.Value;
+                HotItemIndex = GetItemIndexAt(ContentX, ContentY);
+                HotColumnIndex = GetColumnIndexAt(ContentX, ContentY);
 
-            // TODO: remove
-            Console.WriteLine("HotItem: {0}, HotColumn {1}", HotItemIndex, HotColumnIndex);
+                // TODO: remove
+                Console.WriteLine("HotItem: {0}, HotColumn {1}", HotItemIndex, HotColumnIndex);
+            }
 
             base.OnMouseMove(e);
         }
