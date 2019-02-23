@@ -14,25 +14,25 @@ namespace InCoding
         public string Name
         {
             get => _Name;
-            set => CheckPropertyChanged<string>(nameof(Name), ref _Name, ref value);
+            set => CheckPropertyChanged(nameof(Name), ref _Name, ref value);
         }
 
         public int NumericValue
         {
             get => _NumericValue;
-            set => CheckPropertyChanged<int>(nameof(NumericValue), ref _NumericValue, ref value);
+            set => CheckPropertyChanged(nameof(NumericValue), ref _NumericValue, ref value);
         }
 
         public bool Flag
         {
             get => _Flag;
-            set => CheckPropertyChanged<bool>(nameof(Flag), ref _Flag, ref value);
+            set => CheckPropertyChanged(nameof(Flag), ref _Flag, ref value);
         }
 
         public DateTime Date
         {
             get => _Date;
-            set => CheckPropertyChanged<DateTime>(nameof(Date), ref _Date, ref value);
+            set => CheckPropertyChanged(nameof(Date), ref _Date, ref value);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -69,7 +69,7 @@ namespace InCoding
 
         public override string ToString()
         {
-            return String.Format("{0} - {1} - [{2}] - {3}", _Name, _NumericValue, _Flag, _Date);
+            return string.Format("{0} - {1} - [{2}] - {3}", _Name, _NumericValue, _Flag, _Date);
         }
 
         public override bool Equals(object obj)

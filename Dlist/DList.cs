@@ -11,13 +11,39 @@ namespace InCoding.DList
 {
     public class DList : Control
     {
+        private bool _ShowGrid = true;
+
         [DefaultValue(true)]
         [Category("Appearance")]
-        public bool ShowGrid { get; set; } = true;
+        public bool ShowGrid
+        {
+            get => _ShowGrid;
+            set
+            {
+                if (_ShowGrid != value)
+                {
+                    _ShowGrid = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        private Color _GridColor = Color.Black;
 
         [DefaultValue(typeof(Color), "Black")]
         [Category("Appearance")]
-        public Color GridColor { get; set; } = Color.Black;
+        public Color GridColor
+        {
+            get => _GridColor;
+            set
+            {
+                if (_GridColor != value)
+                {
+                    _GridColor = value;
+                    Invalidate();
+                }
+            }
+        }
 
         private int _ItemHeight = 28;
 
@@ -28,9 +54,10 @@ namespace InCoding.DList
             get => _ItemHeight;
             set
             {
-                if (value > 0)
+                if (value > 0 && _ItemHeight != value)
                 {
                     _ItemHeight = value;
+                    Invalidate();
                 }
             }
         }
