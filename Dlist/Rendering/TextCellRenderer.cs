@@ -21,20 +21,14 @@ namespace InCoding.DList.Rendering
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
-            if (state == RenderState.Selected)
+            using (var backBrush = new SolidBrush(backColor))
             {
-                gfx.FillRectangle(SystemBrushes.Highlight, bounds.ToGDI()); // @GDI+
-                foreColor = SystemColors.HighlightText;
-            }
-            else if (state == RenderState.Hot)
-            {
-                gfx.FillRectangle(SystemBrushes.HotTrack, bounds.ToGDI()); // @GDI+
-                foreColor = SystemColors.HighlightText;
+                gfx.FillRectangle(backBrush, bounds.ToGDI()); // @GDI+
             }
 
             if (value != null)
             {
-                TextRenderer.DrawText(gfx, (Format != null) ? String.Format(Format, value) : value.ToString(), font, bounds, foreColor, TextFlags);
+                TextRenderer.DrawText(gfx, (Format != null) ? string.Format(Format, value) : value.ToString(), font, bounds, foreColor, TextFlags);
             }
         }
     }

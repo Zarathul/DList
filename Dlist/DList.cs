@@ -28,6 +28,40 @@ namespace InCoding.DList
             }
         }
 
+        private Color _SelectedItemColor = SystemColors.Highlight;
+
+        [DefaultValue(typeof(SystemColors), "Highlight")]
+        [Category("Appearance")]
+        public Color SelectedItemColor
+        {
+            get => _SelectedItemColor;
+            set
+            {
+                if (_SelectedItemColor != value)
+                {
+                    _SelectedItemColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        private Color _HotItemColor = SystemColors.HotTrack;
+
+        [DefaultValue(typeof(SystemColors), "HotTrack")]
+        [Category("Appearance")]
+        public Color HotItemColor
+        {
+            get => _HotItemColor;
+            set
+            {
+                if (_HotItemColor != value)
+                {
+                    _HotItemColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
         private Color _GridColor = Color.Black;
 
         [DefaultValue(typeof(Color), "Black")]
@@ -40,6 +74,23 @@ namespace InCoding.DList
                 if (_GridColor != value)
                 {
                     _GridColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        private Color _HighlightTextColor = SystemColors.HighlightText;
+
+        [DefaultValue(typeof(SystemColors), "HighlightText")]
+        [Category("Appearance")]
+        public Color HighlightTextColor
+        {
+            get => _HighlightTextColor;
+            set
+            {
+                if (_HighlightTextColor != value)
+                {
+                    _HighlightTextColor = value;
                     Invalidate();
                 }
             }
@@ -231,9 +282,10 @@ namespace InCoding.DList
             // TODO: remove
             Console.WriteLine("Mouse CLICK - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
 
+            // TODO: Check if this is really the right place to do this. Letting the mouse button go currently also selects items!
             if (e.Button == MouseButtons.Left)
             {
-                SelectedItemIndex = GetItemIndexAt(e.X + HScroll.Value, e.Y + VScroll.Value);
+                SelectedItemIndex = GetItemIndexAt(e.X, e.Y);
 
                 // TODO: remove
                 Console.WriteLine("Mouse CLICK - SelectedItemIndex: {0}", SelectedItemIndex);
@@ -246,10 +298,8 @@ namespace InCoding.DList
         {
             if (e.Button == MouseButtons.None)
             {
-                int ContentX = e.X + HScroll.Value;
-                int ContentY = e.Y + VScroll.Value;
-                HotItemIndex = GetItemIndexAt(ContentX, ContentY);
-                HotColumnIndex = GetColumnIndexAt(ContentX, ContentY);
+                HotItemIndex = GetItemIndexAt(e.X, e.Y);
+                HotColumnIndex = GetColumnIndexAt(e.X, e.Y);
 
                 // TODO: remove
                 Console.WriteLine("HotItem: {0}, HotColumn {1}", HotItemIndex, HotColumnIndex);
@@ -361,8 +411,10 @@ namespace InCoding.DList
                     var Item = Items[x];
                     var CellValue = column.GetValue(Item);
                     var State = (SelectedItemIndex == x) ? RenderState.Selected : (HotItemIndex == x) ? RenderState.Hot : RenderState.Normal;
+                    var TextColor = (State == RenderState.Normal) ? ForeColor : HighlightTextColor;
+                    var BackgroundColor = (State == RenderState.Selected) ? SelectedItemColor : (State == RenderState.Hot) ? HotItemColor : BackColor;
 
-                    column.CellRenderer.Draw(gfx, Bounds, State, CellValue, ForeColor, BackColor, Font);
+                    column.CellRenderer.Draw(gfx, Bounds, State, CellValue, TextColor, BackgroundColor, Font);
 
                     Bounds.Y += ItemHeight;
                 }
@@ -514,13 +566,12 @@ namespace InCoding.DList
 
         public int GetItemIndexAt(int x, int y)
         {
-            // TODO: Think about ContentRectanlge
-            if (x < 0) return -1;
-            if (y < 0) return -1;
+            if (x < ContentRectangle.X || x >= ContentRectangle.Right) return -1;
+            if (y < ContentRectangle.Y + ItemHeight || y >= ContentRectangle.Bottom) return -1;
             if (Items.Count <= 0) return -1;
             if (Columns.Count <= 0) return -1;
 
-            int LastColumnRight = 0;
+            int LastColumnRight = ContentRectangle.X;
 
             foreach (var column in Columns)
             {
@@ -529,7 +580,7 @@ namespace InCoding.DList
 
             if (x >= LastColumnRight) return -1;
 
-            int ItemIndex = (int)Math.Floor((y - ItemHeight) / (double)ItemHeight);
+            int ItemIndex = (int)Math.Floor((y - ContentRectangle.Y + VScroll.Value - ItemHeight) / (double)ItemHeight);
 
             if (ItemIndex >= Items.Count)
             {
@@ -543,17 +594,18 @@ namespace InCoding.DList
 
         public int GetColumnIndexAt(int x, int y)
         {
-            if (x < 0) return -1;
-            if ((y < 0) || (y > ItemHeight)) return -1;
+            if (x < ContentRectangle.X || x >= ContentRectangle.Right) return -1;
+            if ((y < ContentRectangle.Y) || (y >= ContentRectangle.Y + ItemHeight)) return -1;
 
-            int Right = 0;
+            int ScrolledX = x + HScroll.Value;
+            int Right = ContentRectangle.X;
             int Index = 0;
 
             foreach (var column in Columns)
             {
                 Right += column.Width;
 
-                if (x < Right) return Index;
+                if (ScrolledX < Right) return Index;
 
                 Index++;
             }
