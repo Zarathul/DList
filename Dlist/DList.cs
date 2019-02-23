@@ -299,10 +299,10 @@ namespace InCoding.DList
             if (e.Button == MouseButtons.None)
             {
                 HotItemIndex = GetItemIndexAt(e.X, e.Y);
-                HotColumnIndex = GetColumnIndexAt(e.X, e.Y);
+                HotColumnIndex = GetColumnHeaderIndexAt(e.X, e.Y);
 
                 // TODO: remove
-                Console.WriteLine("HotItem: {0}, HotColumn {1}", HotItemIndex, HotColumnIndex);
+                Console.WriteLine("HotItem: {0}, HotColumn {1}, Col {2}", HotItemIndex, HotColumnIndex, GetColumnIndexAt(e.X));
             }
 
             base.OnMouseMove(e);
@@ -592,7 +592,12 @@ namespace InCoding.DList
             return ItemIndex;
         }
 
-        public int GetColumnIndexAt(int x, int y)
+        public int GetColumnIndexAt(int x)
+        {
+            return GetColumnHeaderIndexAt(x, ContentRectangle.Y);
+        }
+
+        public int GetColumnHeaderIndexAt(int x, int y)
         {
             if (x < ContentRectangle.X || x >= ContentRectangle.Right) return -1;
             if ((y < ContentRectangle.Y) || (y >= ContentRectangle.Y + ItemHeight)) return -1;
