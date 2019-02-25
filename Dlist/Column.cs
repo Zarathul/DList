@@ -14,25 +14,72 @@ namespace InCoding.DList
         Moving
     }
 
-    public class Column
+    public class Column : INotifyPropertyChanged
     {
-        public string Name { get; set; } = "Column";
-        public int Width { get; set; } = 80;
-        public Font HeaderFont { get; set; }
-        public Font ItemFont { get; set; }
-        public HeaderStyle HeaderStyle { get; set; } = HeaderStyle.Static;
+        private string _Name = "Column";
+        private int _Width = 80;
+        private Font _HeaderFont;
+        private Font _ItemFont;
+        private HeaderStyle _HeaderStyle = HeaderStyle.Static;
+        private IComplexRenderer _CellRenderer = new TextCellRenderer();
+        private ValueGetterFunc _ValueGetter;
+        private ValueSetterFunc _ValueSetter;
+
+        public string Name
+        {
+            get => _Name;
+            set => Utils.CheckPropertyChanged(nameof(Name), ref _Name, ref value, OnPropertyChanged);
+        }
+
+        public int Width
+        {
+            get => _Width;
+            set => Utils.CheckPropertyChanged(nameof(Width), ref _Width, ref value, OnPropertyChanged);
+        }
+
+        public Font HeaderFont
+        {
+            get => _HeaderFont;
+            set => Utils.CheckPropertyChanged(nameof(HeaderFont), ref _HeaderFont, ref value, OnPropertyChanged);
+        }
+
+        public Font ItemFont
+        {
+            get => _ItemFont;
+            set => Utils.CheckPropertyChanged(nameof(ItemFont), ref _ItemFont, ref value, OnPropertyChanged);
+        }
+
+        public HeaderStyle HeaderStyle
+        {
+            get => _HeaderStyle;
+            set => Utils.CheckPropertyChanged(nameof(HeaderStyle), ref _HeaderStyle, ref value, OnPropertyChanged);
+        }
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IComplexRenderer CellRenderer { get; set; } = new TextCellRenderer();
+        public IComplexRenderer CellRenderer
+        {
+            get => _CellRenderer;
+            set => Utils.CheckPropertyChanged(nameof(CellRenderer), ref _CellRenderer, ref value, OnPropertyChanged);
+        }
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ValueGetterFunc ValueGetter { get; set; }
+        public ValueGetterFunc ValueGetter
+        {
+            get => _ValueGetter;
+            set => Utils.CheckPropertyChanged(nameof(ValueGetter), ref _ValueGetter, ref value, OnPropertyChanged);
+        }
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ValueSetterFunc ValueSetter { get; set; }
+        public ValueSetterFunc ValueSetter
+        {
+            get => _ValueSetter;
+            set => Utils.CheckPropertyChanged(nameof(ValueSetter), ref _ValueSetter, ref value, OnPropertyChanged);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public Column(string name) : this()
         {
@@ -42,6 +89,12 @@ namespace InCoding.DList
         public Column()
         {
             ValueGetter = (object item) => item.ToString();
+        }
+
+        protected void OnPropertyChanged(PropertyChangedEventArgs args)
+        {
+            var Handler = PropertyChanged;
+            Handler?.Invoke(this, args);
         }
 
         public object GetValue(object item)

@@ -1,8 +1,11 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Drawing;
 
 namespace InCoding.DList
 {
+    internal delegate void PropertyChangedEventTrigger(PropertyChangedEventArgs args);
+
     internal static class Utils
     {
         public static int Clamp(this int value, int min, int max)
@@ -15,18 +18,16 @@ namespace InCoding.DList
             return new Rectangle(source.X, source.Y, source.Width - 1, source.Height - 1);
         }
 
-        public static bool CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue) where T : IEquatable<T>
+        public static void CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue, PropertyChangedEventTrigger eventTrigger)
         {
-            if (oldValue == null || newValue == null) return false;
+            if (oldValue == null && newValue == null) return;
 
             if ((oldValue == null && newValue != null) || !oldValue.Equals(newValue))
             {
                 oldValue = newValue;
-
-                return true;
+                var Args = new PropertyChangedEventArgs(propertyName);
+                eventTrigger(Args);
             }
-
-            return false;
         }
     }
 }

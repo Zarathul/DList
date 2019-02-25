@@ -7,11 +7,39 @@ using System.Windows.Forms.VisualStyles;
 using InCoding.DList.Collections;
 using InCoding.DList.Rendering;
 
+// TODO: Remove
+/*
+ * Things to REMEMBER, THINK about, or to DO
+ * - Use ControlPaint.DrawFocusRectangle() for key control focus maybe?
+ * - Maybe cache brushes and pens?
+ *
+ * - IntegralHeight mode
+ * - Keyboard controls for item selection
+ * - Ability to add item to the existing selection while holding ctrl or shift
+ * - All kinds of events: Header click, item click etc.
+ * - More cell renderers, checkbox for bools, progressbar for ints etc.
+ * - Cell editing.
+ * - Better/fixed designer support.
+*/ 
+
 namespace InCoding.DList
 {
     public class DList : Control
     {
         private bool _ShowGrid = true;
+        private Color _SelectedItemColor = SystemColors.Highlight;
+        private Color _HotItemColor = SystemColors.HotTrack;
+        private Color _GridColor = Color.Black;
+        private Color _HighlightTextColor = SystemColors.HighlightText;
+        private Color _SelectionRectangleColor = SystemColors.HotTrack;
+        private Color _SelectionRectangleBorderColor = Color.Black;
+        private int _ItemHeight = 28;
+        private int _ResizeGripWidth = 10;
+        private int _SelectedItemIndex = -1;
+        private int _HotItemIndex = -1;
+        private int _HotColumnIndex = -1;
+        private int _PressedColumnIndex = -1;
+        private Point _ItemSelectionEnd = Point.Empty;
 
         [DefaultValue(true)]
         [Category("Appearance")]
@@ -28,7 +56,9 @@ namespace InCoding.DList
             }
         }
 
-        private Color _SelectedItemColor = SystemColors.Highlight;
+        [DefaultValue(true)]
+        [Category("Behavior")]
+        public bool AllowMultipleSelectedItems { get; set; } = true;
 
         [DefaultValue(typeof(SystemColors), "Highlight")]
         [Category("Appearance")]
@@ -45,7 +75,35 @@ namespace InCoding.DList
             }
         }
 
-        private Color _HotItemColor = SystemColors.HotTrack;
+        [DefaultValue(typeof(SystemColors), "HotTrack")]
+        [Category("Appearance")]
+        public Color SelectionRectangleColor
+        {
+            get => _SelectionRectangleColor;
+            set
+            {
+                if (_SelectionRectangleColor != value)
+                {
+                    _SelectionRectangleColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "Black")]
+        [Category("Appearance")]
+        public Color SelectionRectangleBorderColor
+        {
+            get => _SelectionRectangleBorderColor;
+            set
+            {
+                if (_SelectionRectangleBorderColor != value)
+                {
+                    _SelectionRectangleBorderColor = value;
+                    Invalidate();
+                }
+            }
+        }
 
         [DefaultValue(typeof(SystemColors), "HotTrack")]
         [Category("Appearance")]
@@ -62,8 +120,6 @@ namespace InCoding.DList
             }
         }
 
-        private Color _GridColor = Color.Black;
-
         [DefaultValue(typeof(Color), "Black")]
         [Category("Appearance")]
         public Color GridColor
@@ -78,8 +134,6 @@ namespace InCoding.DList
                 }
             }
         }
-
-        private Color _HighlightTextColor = SystemColors.HighlightText;
 
         [DefaultValue(typeof(SystemColors), "HighlightText")]
         [Category("Appearance")]
@@ -96,8 +150,6 @@ namespace InCoding.DList
             }
         }
 
-        private int _ItemHeight = 28;
-
         [DefaultValue(28)]
         [Category("Layout")]
         public int ItemHeight
@@ -113,11 +165,31 @@ namespace InCoding.DList
             }
         }
 
+        [DefaultValue(10)]
+        [Category("Layout")]
+        public int ResizeGripWidth
+        {
+            get => _ResizeGripWidth;
+            set
+            {
+                if (value > 0)
+                {
+                    _ResizeGripWidth = value;
+                }
+            }
+        }
+
+        [DefaultValue(true)]
+        [Category("Layout")]
+        public bool AllowResize { get; set; } = true;
+
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Rectangle ContentRectangle { get; private set; }
 
-        private int _SelectedItemIndex = -1;
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public NotifyingCollection<int> SelectedItemIndices { get; } = new NotifyingCollection<int>();
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -134,8 +206,6 @@ namespace InCoding.DList
             }
         }
 
-        private int _HotItemIndex = -1;
-
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int HotItemIndex
@@ -151,8 +221,6 @@ namespace InCoding.DList
             }
         }
 
-        private int _HotColumnIndex = -1;
-
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int HotColumnIndex
@@ -167,8 +235,6 @@ namespace InCoding.DList
                 }
             }
         }
-
-        private int _PressedColumnIndex = -1;
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -197,9 +263,18 @@ namespace InCoding.DList
         public NotifyingCollection<object> Items { get; } = new NotifyingCollection<object>();
 
         protected VisualStyleRenderer VsRenderer { get; private set; }
-
         protected HScrollBar HScroll { get; }
         protected VScrollBar VScroll { get; }
+        protected Point ItemSelectionStart { get; private set; } = Point.Empty;
+        protected Point ItemSelectionEnd
+        {
+            get => _ItemSelectionEnd;
+            private set
+            {
+                _ItemSelectionEnd = value;
+                Invalidate();
+            }
+        }
 
         protected override Size DefaultMinimumSize => new Size(4 * ItemHeight, ItemHeight * 2);
 
@@ -230,6 +305,8 @@ namespace InCoding.DList
 
             Columns.CollectionChanged += ColumnCollectionChanged;
             Columns.ItemChanged += ColumnChanged;
+
+            SelectedItemIndices.CollectionChanged += SelectedItemIndicesChanged;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -245,6 +322,7 @@ namespace InCoding.DList
             {
                 int FirstVisibleItemIndex = (!VScroll.Visible) ? 0 : Math.Max(0, (VScroll.Value - ItemHeight) / ItemHeight);
                 DrawItems(Gfx, FirstVisibleItemIndex);
+                if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx);
             }
 
             if (Columns.Count > 0)
@@ -261,11 +339,21 @@ namespace InCoding.DList
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (HotColumnIndex >= 0)
+            if (HotColumnIndex >= 0 && Cursor.Current != Cursors.VSplit)
             {
                 PressedColumnIndex = HotColumnIndex;
                 HotColumnIndex = -1;
             }
+            else if (AllowMultipleSelectedItems && e.Button == MouseButtons.Left)
+            {
+                HotItemIndex = -1;
+                SelectedItemIndices.Clear();
+                ItemSelectionStart = new Point(e.X + ContentRectangle.X + HScroll.Value, e.Y + ContentRectangle.Y + VScroll.Value);
+                // TODO: Remove
+                //Console.WriteLine("Select START - {0}", ItemSelectionStart);
+            }
+
+            base.OnMouseDown(e);
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
@@ -275,20 +363,78 @@ namespace InCoding.DList
                 HotColumnIndex = PressedColumnIndex;
                 PressedColumnIndex = -1;
             }
+
+            if (AllowMultipleSelectedItems
+                && Columns.Count > 0
+                && Items.Count > 0
+                && !ItemSelectionStart.IsEmpty
+                && !ItemSelectionEnd.IsEmpty)
+            {
+                // TODO: Remove
+                //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
+
+                // Check if the selection rectangle does horizontally overlap with any items
+                var Selection = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
+                int RightEdge = ContentRectangle.X;
+                bool HorizontalOverlap = false;
+
+                foreach (var column in Columns)
+                {
+                    RightEdge += column.Width;
+
+                    if (Selection.X < RightEdge)
+                    {
+                        HorizontalOverlap = true;
+                        break;
+                    }
+                }
+
+                if (HorizontalOverlap)
+                {
+                    int FirstItemIndex = (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight);
+                    int LastItemIndex = (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight);
+
+                    for (int i = FirstItemIndex; i <= LastItemIndex; i++)
+                    {
+                        SelectedItemIndices.Add(i);
+                    }
+
+                    // TODO: remove
+                    //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
+                }
+
+                // Remove selection rectangle
+                ItemSelectionStart = Point.Empty;
+                ItemSelectionEnd = Point.Empty;
+            }
+
+            base.OnMouseUp(e);
         }
 
         protected override void OnMouseClick(MouseEventArgs e)
         {
             // TODO: remove
-            Console.WriteLine("Mouse CLICK - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
+            //Console.WriteLine("Mouse CLICK - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
 
-            // TODO: Check if this is really the right place to do this. Letting the mouse button go currently also selects items!
             if (e.Button == MouseButtons.Left)
             {
-                SelectedItemIndex = GetItemIndexAt(e.X, e.Y);
+                if (AllowMultipleSelectedItems)
+                {
+                    // Select only the item under the cursor if there is no selection rectangle.
+                    if (ItemSelectionEnd.IsEmpty)
+                    {
+                        SelectedItemIndices.Clear();
+                        int SelectedIndex = GetItemIndexAt(e.X, e.Y);
+                        SelectedItemIndices.Add(SelectedIndex);
+                    }
+                }
+                else
+                {
+                    SelectedItemIndex = GetItemIndexAt(e.X, e.Y);
+                }
 
                 // TODO: remove
-                Console.WriteLine("Mouse CLICK - SelectedItemIndex: {0}", SelectedItemIndex);
+                //Console.WriteLine("Mouse CLICK - SelectedItemIndex: {0}", SelectedItemIndex);
             }
 
             base.OnMouseClick(e);
@@ -301,8 +447,84 @@ namespace InCoding.DList
                 HotItemIndex = GetItemIndexAt(e.X, e.Y);
                 HotColumnIndex = GetColumnHeaderIndexAt(e.X, e.Y);
 
+                if (AllowResize)
+                {
+                    if (HotColumnIndex >= 0)
+                    {
+                        int RightColumnEdge = ContentRectangle.X;
+
+                        for (int i = 0; i <= HotColumnIndex; i++)
+                        {
+                            RightColumnEdge += Columns[i].Width;
+                        }
+
+                        RightColumnEdge--;
+
+                        int ScrolledMouseX = e.X + HScroll.Value;
+                        int GripStart = RightColumnEdge - ResizeGripWidth;
+
+                        // TODO: Remove
+                        //Console.WriteLine("Lim: {0}, Right {2}, SX: {1}", GripStart, ScrolledMouseX, RightColumnEdge);
+
+                        if (ScrolledMouseX >= GripStart && ScrolledMouseX <= RightColumnEdge)
+                        {
+                            Cursor = Cursors.VSplit;
+                        }
+                        else
+                        {
+                            Cursor = Cursors.Default;
+                        }
+                    }
+                    else
+                    {
+                        Cursor = Cursors.Default;
+                    }
+                }
                 // TODO: remove
-                Console.WriteLine("HotItem: {0}, HotColumn {1}, Col {2}", HotItemIndex, HotColumnIndex, GetColumnIndexAt(e.X));
+                //Console.WriteLine("HotItem: {0}, HotColumn {1}, Col {2}", HotItemIndex, HotColumnIndex, GetColumnIndexAt(e.X));
+            }
+            else if (e.Button == MouseButtons.Left)
+            {
+                // Resize the hot column.
+                if (Cursor == Cursors.VSplit)
+                {
+                    int RightColumnEdge = ContentRectangle.X;
+
+                    for (int i = 0; i <= HotColumnIndex; i++)
+                    {
+                        RightColumnEdge += Columns[i].Width;
+                    }
+
+                    RightColumnEdge--;
+
+                    int ScrolledMouseX = e.X + HScroll.Value;
+
+                    int WidthDelta = ScrolledMouseX - RightColumnEdge;
+                    var ResizingColumn = Columns[HotColumnIndex];
+                    int NewColumnWidth = ResizingColumn.Width + WidthDelta;
+
+                    if (NewColumnWidth >= ResizeGripWidth)
+                    {
+                        ResizingColumn.Width = NewColumnWidth;
+                    }
+                }
+                else
+                {
+                    // Update the selection rectangle
+                    if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
+                    {
+                        int ScrolledX = e.X + ContentRectangle.X + HScroll.Value;
+                        int ScrolledY = e.Y + ContentRectangle.Y + VScroll.Value;
+
+                        if ((Math.Abs(ItemSelectionStart.X - ScrolledX) + Math.Abs(ItemSelectionStart.Y - ScrolledY)) >= 3)
+                        {
+                            ItemSelectionEnd = new Point(ScrolledX, ScrolledY);
+                        }
+
+                        // TODO: Remove
+                        //Console.WriteLine("Select UPDATE - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
+                    }
+                }
             }
 
             base.OnMouseMove(e);
@@ -325,7 +547,8 @@ namespace InCoding.DList
 
                 VScroll.Value = NewScrollValue.Clamp(VScroll.Minimum, VScroll.Maximum - VScroll.LargeChange + 1);
 
-                Console.WriteLine("Old: {0} New: {1}", VScroll.Value, NewScrollValue);
+                // TODO: Remove
+                //Console.WriteLine("Old: {0} New: {1}", VScroll.Value, NewScrollValue);
             }
 
             base.OnMouseWheel(e);
@@ -351,13 +574,18 @@ namespace InCoding.DList
             Invalidate();
         }
 
+        protected void SelectedItemIndicesChanged(object sender, NotifyingCollectionChangedEventArgs e)
+        {
+            if (AllowMultipleSelectedItems) Invalidate();
+        }
+
         protected void ScrollValueChanged(object sender, EventArgs e)
         {
             Invalidate();
 
             // TODO: Remove
-            ScrollBar SBar = (ScrollBar)sender;
-            Console.WriteLine("{0}, LC: {1}", SBar, SBar.LargeChange);
+            //ScrollBar SBar = (ScrollBar)sender;
+            //Console.WriteLine("{0}, LC: {1}", SBar, SBar.LargeChange);
         }
 
         protected Rectangle DrawBackground(Graphics gfx)
@@ -410,9 +638,13 @@ namespace InCoding.DList
 
                     var Item = Items[x];
                     var CellValue = column.GetValue(Item);
-                    var State = (SelectedItemIndex == x) ? RenderState.Selected : (HotItemIndex == x) ? RenderState.Hot : RenderState.Normal;
+                    var State = ((AllowMultipleSelectedItems && SelectedItemIndices.Contains(x)) || SelectedItemIndex == x)
+                        ? RenderState.Selected
+                        : (HotItemIndex == x) ? RenderState.Hot : RenderState.Normal;
                     var TextColor = (State == RenderState.Normal) ? ForeColor : HighlightTextColor;
-                    var BackgroundColor = (State == RenderState.Selected) ? SelectedItemColor : (State == RenderState.Hot) ? HotItemColor : BackColor;
+                    var BackgroundColor = (State == RenderState.Selected)
+                        ? SelectedItemColor
+                        : (State == RenderState.Hot) ? HotItemColor : BackColor;
 
                     column.CellRenderer.Draw(gfx, Bounds, State, CellValue, TextColor, BackgroundColor, Font);
 
@@ -431,7 +663,7 @@ namespace InCoding.DList
             var Y1 = ContentRectangle.Y + ItemHeight;
             var Y2 = Math.Min(ContentRectangle.Bottom - 1, Y1 + Items.Count * ItemHeight - 1);
 
-            using (var GridPen = new Pen(Color))
+            using (var gridPen = new Pen(Color))
             {
                 var TotalColumnWidth = 0;
 
@@ -440,7 +672,7 @@ namespace InCoding.DList
                 {
                     TotalColumnWidth += column.Width;
                     X += column.Width;
-                    gfx.DrawLine(GridPen, X, Y1, X, Y2);
+                    gfx.DrawLine(gridPen, X, Y1, X, Y2);
                 }
 
                 // Horizontal grid lines.
@@ -449,7 +681,7 @@ namespace InCoding.DList
                 var Y = ContentRectangle.Top + ItemHeight - 1;
 
                 // Headers
-                gfx.DrawLine(GridPen, X1, Y, X2, Y);
+                gfx.DrawLine(gridPen, X1, Y, X2, Y);
                 Y += ItemHeight - VScroll.Value;
 
                 // Items
@@ -457,11 +689,32 @@ namespace InCoding.DList
                 {
                     if ((Y >= ContentRectangle.Y + ItemHeight) && (Y < ContentRectangle.Bottom))
                     {
-                        gfx.DrawLine(GridPen, X1, Y, X2, Y);
+                        gfx.DrawLine(gridPen, X1, Y, X2, Y);
                     }
 
                     Y += ItemHeight;
                 }
+            }
+        }
+
+        protected void DrawSelectionRectangle(Graphics gfx)
+        {
+            var SelectionRectangle = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd).ToGDI();
+            SelectionRectangle.Offset(-HScroll.Value, -VScroll.Value);
+
+            // TODO: remove
+            //Console.WriteLine("Select DRAW - {0}", SelectionRectangle);
+
+            int Alpha = (SelectionRectangleColor.A <= 200) ? SelectionRectangleColor.A : 128;
+
+            using (var rectangleBrush = new SolidBrush(Color.FromArgb(Alpha, SelectionRectangleColor)))
+            {
+                gfx.FillRectangle(rectangleBrush, SelectionRectangle);
+            }
+
+            using (Pen framePen = new Pen(SelectionRectangleBorderColor))
+            {
+                gfx.DrawRectangle(framePen, SelectionRectangle);
             }
         }
 
@@ -562,6 +815,15 @@ namespace InCoding.DList
             }
 
             return false;
+        }
+
+        private Rectangle GetRectangleFromPoints(Point p0, Point p1)
+        {
+            var RectangleStart = new Point(Math.Min(p0.X, p1.X), Math.Min(p0.Y, p1.Y));
+            var RectangleEnd = new Point(Math.Max(p0.X, p1.X), Math.Max(p0.Y, p1.Y));
+            var RectangleSize = new Size(RectangleEnd.X - RectangleStart.X, RectangleEnd.Y - RectangleStart.Y);
+
+            return new Rectangle(RectangleStart, RectangleSize);
         }
 
         public int GetItemIndexAt(int x, int y)

@@ -51,20 +51,16 @@ namespace InCoding
             Handler?.Invoke(this, args);
         }
 
-        protected bool CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue) where T : IEquatable<T>
+        protected void CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue) where T : IEquatable<T>
         {
-            if (oldValue == null || newValue == null) return false;
+            if (oldValue == null && newValue == null) return;
 
             if ((oldValue == null && newValue != null) || !oldValue.Equals(newValue))
             {
                 oldValue = newValue;
                 var Args = new PropertyChangedEventArgs(propertyName);
                 OnPropertyChanged(Args);
-
-                return true;
             }
-
-            return false;
         }
 
         public override string ToString()
