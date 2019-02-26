@@ -33,27 +33,11 @@ namespace InCoding
             dList1.Columns.Add(Column4);
 
             // Items
-            var Item0 = new TestItem("Item0", 0, true, DateTime.Now);
-            var Item1 = new TestItem("Item1", 1, false, DateTime.Now);
-            var Item2 = new TestItem("Item2", 2, true, DateTime.Now);
-            var Item3 = new TestItem("Item3", 3, false, DateTime.Now);
-            var Item4 = new TestItem("Item4", 4, true, DateTime.Now);
-            var Item5 = new TestItem("Item5", 5, false, DateTime.Now);
-            var Item6 = new TestItem("Item6", 6, true, DateTime.Now);
-            var Item7 = new TestItem("Item7", 7, false, DateTime.Now);
-            var Item8 = new TestItem("Item8", 8, true, DateTime.Now);
-            var Item9 = new TestItem("Item9", 9, false, DateTime.Now);
-
-            dList1.Items.Add(Item0);
-            dList1.Items.Add(Item1);
-            dList1.Items.Add(Item2);
-            dList1.Items.Add(Item3);
-            dList1.Items.Add(Item4);
-            dList1.Items.Add(Item5);
-            dList1.Items.Add(Item6);
-            dList1.Items.Add(Item7);
-            dList1.Items.Add(Item8);
-            dList1.Items.Add(Item9);
+            for (int i = 0; i < 30; i++)
+            {
+                var Item = TestItem.GenerateRandom(i);
+                dList1.Items.Add(Item);
+            }
         }
 
         private void ItemCollectionChanged(object sender, NotifyingCollectionChangedEventArgs args)
@@ -62,17 +46,20 @@ namespace InCoding
 
             switch (args.Action)
             {
-                case ItemCollectionChangeAction.Add:
+                case NotifyingCollectionChangeAction.Add:
                     Entry = String.Format("{0} == ADD {1}[{2}]", nameof(ItemCollectionChanged), args.NewItem, args.NewItemIndex);
                     break;
-                case ItemCollectionChangeAction.Remove:
+                case NotifyingCollectionChangeAction.Remove:
                     Entry = String.Format("{0} == REMOVE {1}[{2}]", nameof(ItemCollectionChanged), args.OldItem, args.OldItemIndex);
                     break;
-                case ItemCollectionChangeAction.Replace:
+                case NotifyingCollectionChangeAction.Replace:
                     Entry = String.Format("{0} == REPLACE {1}[{2}] with {3}[{4}]", nameof(ItemCollectionChanged), args.OldItem, args.OldItemIndex, args.NewItem, args.NewItemIndex);
                     break;
-                case ItemCollectionChangeAction.Clear:
+                case NotifyingCollectionChangeAction.Clear:
                     Entry = String.Format("{0} == CLEAR", nameof(ItemCollectionChanged));
+                    break;
+                case NotifyingCollectionChangeAction.Sort:
+                    Entry = String.Format("{0} == SORT", nameof(ItemCollectionChanged));
                     break;
                 default:
                     break;

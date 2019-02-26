@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -6,11 +7,36 @@ namespace InCoding.DList.Collections
 {
     public class NotifyingCollection<T> : Collection<T>
     {
+        private List<T> _ItemList;
+
         public event EventHandler<NotifyingCollectionChangedEventArgs> CollectionChanged;
         public event EventHandler<ItemPropertyChangedEventArgs> ItemChanged;
 
-        public NotifyingCollection()
+        public NotifyingCollection() : this(new List<T>())
         {
+        }
+
+        public NotifyingCollection(List<T> list) : base(list)
+        {
+            _ItemList = list;
+        }
+
+        public void AddRange(IEnumerable<T> items)
+        {
+            int FirstEmptyIndex = Items.Count;
+
+            foreach (var item in items)
+            {
+                InsertItem(FirstEmptyIndex, item);
+                FirstEmptyIndex++;
+            }
+        }
+
+        public void Sort()
+        {
+            _ItemList.Sort();
+            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Sort);
+            OnCollectionChanged(Args);
         }
 
         protected override void ClearItems()
@@ -27,7 +53,7 @@ namespace InCoding.DList.Collections
 
             base.ClearItems();
 
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(ItemCollectionChangeAction.Clear);
+            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Clear);
             OnCollectionChanged(Args);
         }
 
@@ -42,7 +68,7 @@ namespace InCoding.DList.Collections
                 Iface.PropertyChanged += HandleItemNotification;
             }
 
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(ItemCollectionChangeAction.Add, item, index, null, 0);
+            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, 0);
             OnCollectionChanged(Args);
         }
 
@@ -59,7 +85,7 @@ namespace InCoding.DList.Collections
                 Iface.PropertyChanged -= HandleItemNotification;
             }
 
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(ItemCollectionChangeAction.Remove, null, 0, Item, index);
+            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Remove, null, 0, Item, index);
             OnCollectionChanged(Args);
         }
 
@@ -83,7 +109,7 @@ namespace InCoding.DList.Collections
                 Iface.PropertyChanged += HandleItemNotification;
             }
 
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(ItemCollectionChangeAction.Replace, item, index, OldItem, index);
+            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
             OnCollectionChanged(Args);
         }
 

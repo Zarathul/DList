@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Text;
 
 namespace InCoding
 {
@@ -86,6 +87,51 @@ namespace InCoding
             hashCode = hashCode * -1521134295 + _Flag.GetHashCode();
             hashCode = hashCode * -1521134295 + _Date.GetHashCode();
             return hashCode;
+        }
+
+        private static Random _Rng = new Random();
+
+        public static TestItem GenerateRandom(int index = -1)
+        {
+            int NameLength = _Rng.Next(5, 24);
+            if (index >= 0) NameLength += 8;
+            var RngName = new StringBuilder(NameLength);
+
+            if (index >= 0) RngName.AppendFormat("[{0}] - ", index);
+
+            for (int i = 0; i < NameLength; i++)
+            {
+
+                switch (_Rng.Next(0, 2))
+                {
+                    case 0:
+                        // Number
+                        RngName.Append(_Rng.Next(0, 10));
+                        break;
+                    case 1:
+                        // Upper- or lowercase letter
+
+                        char Letter = (char)_Rng.Next(65, 91);
+
+                        if (_Rng.Next(0, 2) == 0)
+                        {
+                            Letter = char.ToLowerInvariant(Letter);
+                        }
+
+                        RngName.Append(Letter);
+
+                        break;
+                    default:
+                        RngName.Append("?");
+                        break;
+                }
+            }
+
+            int RngNumber = _Rng.Next(0, 101);
+            bool RngFlag = (_Rng.Next(0, 2) == 1);
+            DateTime RngDate = DateTimeOffset.FromUnixTimeSeconds(_Rng.Next()).DateTime;
+
+            return new TestItem(RngName.ToString(), RngNumber, RngFlag, RngDate);
         }
     }
 }
