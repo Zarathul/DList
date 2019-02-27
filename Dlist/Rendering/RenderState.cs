@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InCoding.DList.Rendering
 {
+    [Flags]
     public enum RenderState
     {
-        Normal,
-        Hot,
-        Pressed,
-        Selected
+        None = 0,
+        Normal = 1,
+        Hot = 2,
+        Pressed = 4,
+        Selected = 8,
+        Focused = 16
     }
 }

@@ -23,7 +23,7 @@ namespace InCoding.DList.Rendering
         {
             using (var backBrush = new SolidBrush(backColor))
             {
-                gfx.FillRectangle(backBrush, bounds.ToGDI()); // @GDI+
+                gfx.FillRectangle(backBrush, bounds.ToGDI()); // @GDI
             }
 
             if (value != null)

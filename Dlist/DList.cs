@@ -7,20 +7,33 @@ using System.Windows.Forms.VisualStyles;
 using InCoding.DList.Collections;
 using InCoding.DList.Rendering;
 
+/*
+ * Tag notes:
+ * ----------
+ * @GDI: This is used to tag functions that expect rectangles in GDI off-by-one style. 
+ * Graphics.DrawRectangle() for example will draw from (X,Y) to (Right,Bottom) where 
+ * Right = X + Width and Bottom = Y + Height. Therefore drawing a rectangle at (0, 0) with 
+ * a width and height of 10 will result in a 11 pixels wide and high rectangle. What makes 
+ * things worse is that this is not true for every method. Some honor the width and height 
+ * properties, while others don't. 
+ * System.Drawing.Rectancle adopted the GDI way of calculating Right and Bottom, so all 
+ * code in this project is (or should be written) assuming those properties return wrong 
+ * values. Meaning either don't use them or subtract one. Therefore when passing rectangles 
+ * to affected framework methods Utils.ToGDI() should be used.
+ */
+
 // TODO: Remove
 /*
  * Things to REMEMBER, THINK about, or to DO
- * - Use ControlPaint.DrawFocusRectangle() for key control focus maybe?
  * - Maybe cache brushes and pens?
  *
- * - Introduce focused item to keyboard control to replace the weird way things are handled now.
  * - Autosize column on grip doubleclick
  * - IntegralHeight mode
  * - All kinds of events: Header click, item click etc.
  * - More cell renderers, checkbox for bools, progressbar for ints etc.
  * - Cell editing.
  * - Better/fixed designer support.
-*/ 
+*/
 
 namespace InCoding.DList
 {
@@ -35,6 +48,7 @@ namespace InCoding.DList
         private Color _SelectionRectangleBorderColor = Color.Black;
         private int _ItemHeight = 28;
         private int _ResizeGripWidth = 10;
+        private int _FocusedItemIndex = -1;
         private int _SelectedItemIndex = -1;
         private int _HotItemIndex = -1;
         private int _HotColumnIndex = -1;
@@ -193,6 +207,21 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int FocusedItemIndex
+        {
+            get => _FocusedItemIndex;
+            set
+            {
+                if (_FocusedItemIndex != value)
+                {
+                    _FocusedItemIndex = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int SelectedItemIndex
         {
             get => _SelectedItemIndex;
@@ -332,6 +361,8 @@ namespace InCoding.DList
             {
                 int FirstVisibleItemIndex = (!VScroll.Visible) ? 0 : Math.Max(0, (VScroll.Value - ItemHeight) / ItemHeight);
                 DrawItems(Gfx, FirstVisibleItemIndex);
+
+                if (FocusedItemIndex >= 0) DrawFocusRectangle(Gfx);
                 if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx);
             }
 
@@ -357,7 +388,7 @@ namespace InCoding.DList
             }
             else
             {
-                gfx.DrawRectangle(Pens.Black, ClientRectangle.ToGDI()); // @GDI+
+                gfx.DrawRectangle(Pens.Black, ClientRectangle.ToGDI()); // @GDI
 
                 return new Rectangle(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
             }
@@ -400,10 +431,16 @@ namespace InCoding.DList
                     var State = ((AllowMultipleSelectedItems && SelectedItemIndices.Contains(x)) || SelectedItemIndex == x)
                         ? RenderState.Selected
                         : (HotItemIndex == x) ? RenderState.Hot : RenderState.Normal;
-                    var TextColor = (State == RenderState.Normal) ? ForeColor : HighlightTextColor;
-                    var BackgroundColor = (State == RenderState.Selected)
+
+                    if (FocusedItemIndex == x)
+                    {
+                        State |= RenderState.Focused;
+                    }
+
+                    var TextColor = (State.HasFlag(RenderState.Normal)) ? ForeColor : HighlightTextColor;
+                    var BackgroundColor = (State.HasFlag(RenderState.Selected))
                         ? SelectedItemColor
-                        : (State == RenderState.Hot) ? HotItemColor : BackColor;
+                        : (State.HasFlag(RenderState.Hot)) ? HotItemColor : BackColor;
 
                     column.CellRenderer.Draw(gfx, Bounds, State, CellValue, TextColor, BackgroundColor, Font);
 
@@ -454,6 +491,28 @@ namespace InCoding.DList
                     Y += ItemHeight;
                 }
             }
+        }
+
+        protected void DrawFocusRectangle(Graphics gfx)
+        {
+            var ItemPos = new Point(ContentRectangle.X, ContentRectangle.Y - VScroll.Value + (FocusedItemIndex + 1) * ItemHeight);
+            var ItemSize= new Size(0, ItemHeight);
+
+            foreach (var column in Columns)
+            {
+                ItemSize.Width += column.Width;
+            }
+
+            // The grid, if drawn, occupies space in the cell. The most right and most bottom pixels.
+            // Because of this the focus rectangle is drawn 1 pixel smaller if the grid is rendered.
+            if (ShowGrid)
+            {
+                ItemSize.Width--;
+                ItemSize.Height--;
+            }
+
+            var Bounds = new Rectangle(ItemPos, ItemSize);
+            ControlPaint.DrawFocusRectangle(gfx, Bounds);
         }
 
         protected void DrawSelectionRectangle(Graphics gfx)
@@ -518,22 +577,22 @@ namespace InCoding.DList
             switch (e.KeyCode)
             {
                 case Keys.Up:
-                    HandleKeyUp(e.Modifiers);
+                    HandleArrowUp(e.Modifiers);
                     e.Handled = true;
                     break;
 
                 case Keys.Down:
-                    HandleKeyDown(e.Modifiers);
+                    HandleArrowDown(e.Modifiers);
                     e.Handled = true;
                     break;
 
                 case Keys.Left:
-                    HandleKeyLeft(e.Modifiers);
+                    HandleArrowLeft(e.Modifiers);
                     e.Handled = true;
                     break;
 
                 case Keys.Right:
-                    HandleKeyRight(e.Modifiers);
+                    HandleArrowRight(e.Modifiers);
                     e.Handled = true;
                     break;
 
@@ -554,6 +613,11 @@ namespace InCoding.DList
 
                 case Keys.End:
                     ScrollToEnd();
+                    e.Handled = true;
+                    break;
+
+                case Keys.Space:
+                    HandleSpace(e.Modifiers);
                     e.Handled = true;
                     break;
 
@@ -580,84 +644,97 @@ namespace InCoding.DList
             base.OnKeyDown(e);
         }
 
-        protected void HandleKeyUp(Keys modifiers)
+        protected void HandleSpace(Keys modifiers)
         {
-            if (Items.Count == 0) return;
-
-            if (!AllowMultipleSelectedItems)
+            if (AllowMultipleSelectedItems)
             {
-                if (SelectedItemIndex >= 1)
+                if (SelectedItemIndices.Contains(FocusedItemIndex))
                 {
-                    SelectedItemIndex -= 1;
-                    EnsureItemVisibility(SelectedItemIndex);
+                    SelectedItemIndices.Remove(FocusedItemIndex);
+                }
+                else
+                {
+                    SelectedItemIndices.Add(FocusedItemIndex);
                 }
             }
             else
             {
-                if (SelectedItemIndices.Count == 0)
+                if (SelectedItemIndex == FocusedItemIndex)
                 {
-                    SelectedItemIndices.Add(0);
+                    SelectedItemIndex = -1;
                 }
                 else
                 {
-                    // SPEED: @SortingSelection Maybe it would be better to cache the highest and the
-                    // lowest selected item index somewhere.
-                    SelectedItemIndices.Sort();
-                    int StartIndex = SelectedItemIndices[0];
+                    SelectedItemIndex = FocusedItemIndex;
+                }
+            }
+        }
 
-                    if (StartIndex == 0) return;
+        protected void HandleArrowUp(Keys modifiers)
+        {
+            if (Items.Count == 0) return;
 
+            if (FocusedItemIndex >= 1)
+            {
+                FocusedItemIndex -= 1;
+            }
+
+            if (!AllowMultipleSelectedItems)
+            {
+                if (!modifiers.HasFlag(Keys.Control))
+                {
+                    SelectedItemIndex = FocusedItemIndex;
+                }
+            }
+            else
+            {
+                if (!modifiers.HasFlag(Keys.Control))
+                {
                     if (!modifiers.HasFlag(Keys.Shift))
                     {
                         SelectedItemIndices.Clear();
                     }
 
-                    int NewSelectedIndex = StartIndex - 1;
-                    SelectedItemIndices.Add(NewSelectedIndex);
-                    EnsureItemVisibility(NewSelectedIndex);
+                    SelectedItemIndices.Add(FocusedItemIndex);
                 }
             }
+
+            EnsureItemVisibility(FocusedItemIndex);
         }
 
-        protected void HandleKeyDown(Keys modifiers)
+        protected void HandleArrowDown(Keys modifiers)
         {
             if (Items.Count == 0) return;
 
+            if (FocusedItemIndex < Items.Count - 1)
+            {
+                FocusedItemIndex += 1;
+            }
+
             if (!AllowMultipleSelectedItems)
             {
-                if (SelectedItemIndex < Items.Count - 1)
+                if (!modifiers.HasFlag(Keys.Control))
                 {
-                    SelectedItemIndex += 1;
-                    EnsureItemVisibility(SelectedItemIndex);
+                    SelectedItemIndex = FocusedItemIndex;
                 }
             }
             else
             {
-                if (SelectedItemIndices.Count == 0)
+                if (!modifiers.HasFlag(Keys.Control))
                 {
-                    SelectedItemIndices.Add(0);
-                }
-                else
-                {
-                    // SPEED: @SortingSelection
-                    SelectedItemIndices.Sort();
-                    int LastIndex = SelectedItemIndices[SelectedItemIndices.Count - 1];
-
-                    if (LastIndex == Items.Count - 1) return;
-
                     if (!modifiers.HasFlag(Keys.Shift))
                     {
                         SelectedItemIndices.Clear();
                     }
 
-                    int NewSelectedIndex = LastIndex + 1;
-                    SelectedItemIndices.Add(NewSelectedIndex);
-                    EnsureItemVisibility(NewSelectedIndex);
+                    SelectedItemIndices.Add(FocusedItemIndex);
                 }
             }
+
+            EnsureItemVisibility(FocusedItemIndex);
         }
 
-        protected void HandleKeyLeft(Keys modifiers)
+        protected void HandleArrowLeft(Keys modifiers)
         {
             if (Items.Count == 0 || !HScroll.Visible) return;
 
@@ -670,7 +747,7 @@ namespace InCoding.DList
             }
         }
 
-        protected void HandleKeyRight(Keys modifiers)
+        protected void HandleArrowRight(Keys modifiers)
         {
             if (Items.Count == 0 || !HScroll.Visible) return;
 
@@ -697,7 +774,7 @@ namespace InCoding.DList
                 PressedColumnIndex = HotColumnIndex;
                 HotColumnIndex = -1;
             }
-            else if (AllowMultipleSelectedItems && e.Button == MouseButtons.Left)
+            else if (AllowMultipleSelectedItems && e.Button == MouseButtons.Left)   // Begin selection rectangle handling
             {
                 HotItemIndex = -1;
 
@@ -726,57 +803,64 @@ namespace InCoding.DList
                 PressedColumnIndex = -1;
             }
 
-            if (AllowMultipleSelectedItems
-                && Columns.Count > 0
-                && Items.Count > 0
-                && !ItemSelectionStart.IsEmpty
-                && !ItemSelectionEnd.IsEmpty)
+            if (AllowMultipleSelectedItems)
             {
-                // TODO: Remove
-                //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
-
-                // Check if the selection rectangle does horizontally overlap with any items
-                var Selection = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
-                int RightEdge = ContentRectangle.X;
-                bool HorizontalOverlap = false;
-
-                foreach (var column in Columns)
+                if (Columns.Count > 0 
+                    && Items.Count > 0
+                    && !ItemSelectionStart.IsEmpty
+                    && !ItemSelectionEnd.IsEmpty)
                 {
-                    RightEdge += column.Width;
+                    // Finish selection rectangle handling
 
-                    if (Selection.X < RightEdge)
+                    // TODO: Remove
+                    //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
+
+                    // Check if the selection rectangle does horizontally overlap with any items
+                    var Selection = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
+                    int RightEdge = ContentRectangle.X;
+                    bool HorizontalOverlap = false;
+
+                    foreach (var column in Columns)
                     {
-                        HorizontalOverlap = true;
-                        break;
-                    }
-                }
+                        RightEdge += column.Width;
 
-                if (HorizontalOverlap)
-                {
-                    int FirstItemIndex = (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight);
-                    int LastItemIndex = (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight);
-
-                    for (int i = FirstItemIndex; i <= LastItemIndex; i++)
-                    {
-                        if (AddToSelection)
+                        if (Selection.X < RightEdge)
                         {
-                            if (!SelectedItemIndices.Contains(i))
+                            HorizontalOverlap = true;
+                            break;
+                        }
+                    }
+
+                    if (HorizontalOverlap)
+                    {
+                        int FirstItemIndex = (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight);
+                        int LastItemIndex = (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight);
+
+                        for (int i = FirstItemIndex; i <= LastItemIndex; i++)
+                        {
+                            if (AddToSelection)
+                            {
+                                if (!SelectedItemIndices.Contains(i))
+                                {
+                                    SelectedItemIndices.Add(i);
+                                }
+                            }
+                            else
                             {
                                 SelectedItemIndices.Add(i);
                             }
                         }
-                        else
-                        {
-                            SelectedItemIndices.Add(i);
-                        }
-                    }
 
-                    // TODO: remove
-                    //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
-                    //Console.WriteLine("Select INDICES - {0}", SelectedItemIndices.Count);
+                        // Focus the last item in the direction the selection rectangle was drawn
+                        FocusedItemIndex = (ItemSelectionStart.Y < ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
+
+                        // TODO: remove
+                        //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
+                        //Console.WriteLine("Select INDICES - {0}", SelectedItemIndices.Count);
+                    }
                 }
 
-                // Remove selection rectangle
+                // Clean up selection rectangle data
                 ItemSelectionStart = Point.Empty;
                 ItemSelectionEnd = Point.Empty;
                 AddToSelection = false;
@@ -799,14 +883,20 @@ namespace InCoding.DList
                     // Select only the item under the cursor if there is no selection rectangle.
                     if (ItemSelectionEnd.IsEmpty)
                     {
-                        SelectedItemIndices.Clear();
+                        if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
+                        {
+                            SelectedItemIndices.Clear();
+                        }
+
                         int SelectedIndex = GetItemIndexAt(e.X, e.Y);
                         SelectedItemIndices.Add(SelectedIndex);
+                        FocusedItemIndex = SelectedItemIndex;
                     }
                 }
                 else
                 {
                     SelectedItemIndex = GetItemIndexAt(e.X, e.Y);
+                    FocusedItemIndex = SelectedItemIndex;
                 }
 
                 // TODO: remove

@@ -22,11 +22,11 @@ namespace InCoding.DList.Rendering
         {
             if (Application.RenderWithVisualStyles && CanUseVisualStyles)
             {
-                if (state == RenderState.Hot)
+                if (state.HasFlag(RenderState.Hot))
                 {
                     VsRenderer.SetParameters(VisualStyleElement.Header.Item.Hot);
                 }
-                else if (state == RenderState.Pressed)
+                else if (state.HasFlag(RenderState.Pressed))
                 {
                     VsRenderer.SetParameters(VisualStyleElement.Header.Item.Pressed);
                 }
