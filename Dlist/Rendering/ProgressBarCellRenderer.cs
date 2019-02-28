@@ -8,20 +8,19 @@ namespace InCoding.DList.Rendering
     {
         public int MinValue { get; set; }
         public int MaxValue { get; set; }
+        public bool Horizontal { get; set; }
         public int ChunkThickness { get; set; }
         public int ChunkSpaceThickness { get; set; }
 
-        public bool Horizontal { get; set; }
-
-        public ProgressBarCellRenderer(int minValue, int maxValue, int chunkThickness = 0, int chunkSpaceThickness = -1, bool horizontal = true)
+        public ProgressBarCellRenderer(int minValue, int maxValue, bool horizontal = true, int chunkThickness = 0, int chunkSpaceThickness = -1)
         {
             if (maxValue <= minValue) throw new ArgumentException("Max value is less than or equal to min value.", nameof(maxValue));
 
             MinValue = minValue;
             MaxValue = maxValue;
+            Horizontal = horizontal;
             ChunkThickness = chunkThickness;
             ChunkSpaceThickness = chunkSpaceThickness;
-            Horizontal = horizontal;
         }
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
@@ -37,14 +36,22 @@ namespace InCoding.DList.Rendering
             int ActualChunkThickness = (ChunkThickness > 0) ? ChunkThickness : ProgressBarRenderer.ChunkThickness;
             int ActualChunkSpaceThickness = (ChunkSpaceThickness >= 0) ? ChunkSpaceThickness : ProgressBarRenderer.ChunkSpaceThickness;
             int TotalChunkThickness = ActualChunkThickness + ActualChunkSpaceThickness;
-            double Value = Utils.Clamp((int)value, MinValue, MaxValue);
-            double PercentageFactor = (Value + Math.Abs(MinValue)) / (MaxValue - MinValue);
+            int Value = Utils.Clamp((int)value, MinValue, MaxValue);
+            double PercentageFactor = ((double)Value + Math.Abs(MinValue)) / (MaxValue - MinValue);
 
             if (Horizontal)
             {
                 ProgressBarRenderer.DrawHorizontalBar(gfx, Bounds);
 
-                int BarWidth = Utils.Clamp((int)Math.Floor(PercentageFactor * (Bounds.Width - 2)), 0, Bounds.Width - 2);
+                int BarWidth = (int)Math.Floor(PercentageFactor * (Bounds.Width - 2));
+
+                if (BarWidth == 0 && Value > MinValue)
+                {
+                    // If value is greater than zero at least show something. Even if it's only one pixel.
+                    BarWidth = 1;
+                }
+
+                BarWidth = Utils.Clamp(BarWidth, 0, Bounds.Width - 2);
 
                 if (ActualChunkSpaceThickness <= 0)
                 {
@@ -75,7 +82,15 @@ namespace InCoding.DList.Rendering
             {
                 ProgressBarRenderer.DrawVerticalBar(gfx, Bounds);
 
-                int BarHeight = Utils.Clamp((int)Math.Floor(PercentageFactor * (Bounds.Height - 2)), 0, Bounds.Height - 2);
+                int BarHeight = (int)Math.Floor(PercentageFactor * (Bounds.Height - 2));
+
+                if (BarHeight == 0 && Value > MinValue)
+                {
+                    // If value is greater than zero at least show something. Even if it's only one pixel.
+                    BarHeight = 1;
+                }
+
+                BarHeight = Utils.Clamp(BarHeight, 0, Bounds.Height - 2);
 
                 if (ActualChunkSpaceThickness <= 0)
                 {
@@ -91,7 +106,7 @@ namespace InCoding.DList.Rendering
 
                     for (int i = 0; i < ChunkCount; i++)
                     {
-                        ProgressBarRenderer.DrawHorizontalChunks(gfx, ChunkBounds);
+                        ProgressBarRenderer.DrawVerticalChunks(gfx, ChunkBounds);
                         ChunkBounds.Y -= TotalChunkThickness;
                     }
 
@@ -99,7 +114,7 @@ namespace InCoding.DList.Rendering
                     {
                         ChunkBounds.Height = RemainingBarHeight;
                         ChunkBounds.Y += (TotalChunkThickness - RemainingBarHeight - 1);
-                        ProgressBarRenderer.DrawHorizontalChunks(gfx, ChunkBounds);
+                        ProgressBarRenderer.DrawVerticalChunks(gfx, ChunkBounds);
                     }
                 }
             }
