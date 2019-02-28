@@ -1,36 +1,35 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
+using Styles = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
     public class HeaderRenderer : VisualStyleRendererBase, IComplexRenderer
     {
-        private readonly TextFormatFlags TextFlags = TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis;
-
-        public HeaderRenderer() : base(
-            new VisualStyleElement[] {
-            VisualStyleElement.Header.Item.Normal,
-            VisualStyleElement.Header.Item.Hot,
-            VisualStyleElement.Header.Item.Pressed })
+        public HeaderRenderer(ContentAlignment alignment = DefaultAlignment) : base(
+            new Styles.VisualStyleElement[] {
+            Styles.VisualStyleElement.Header.Item.Normal,
+            Styles.VisualStyleElement.Header.Item.Hot,
+            Styles.VisualStyleElement.Header.Item.Pressed },
+            alignment)
         {
         }
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
-            if (Application.RenderWithVisualStyles && CanUseVisualStyles)
+            if (Application.RenderWithVisualStyles && VsRenderer != null)
             {
                 if (state.HasFlag(RenderState.Hot))
                 {
-                    VsRenderer.SetParameters(VisualStyleElement.Header.Item.Hot);
+                    VsRenderer.SetParameters(Styles.VisualStyleElement.Header.Item.Hot);
                 }
                 else if (state.HasFlag(RenderState.Pressed))
                 {
-                    VsRenderer.SetParameters(VisualStyleElement.Header.Item.Pressed);
+                    VsRenderer.SetParameters(Styles.VisualStyleElement.Header.Item.Pressed);
                 }
                 else
                 {
-                    VsRenderer.SetParameters(VisualStyleElement.Header.Item.Normal);
+                    VsRenderer.SetParameters(Styles.VisualStyleElement.Header.Item.Normal);
                 }
 
                 VsRenderer.DrawBackground(gfx, bounds);
@@ -49,7 +48,8 @@ namespace InCoding.DList.Rendering
             // so we draw it ourselves even if visual styles are on.
             if (value != null)
             {
-                TextRenderer.DrawText(gfx, value.ToString(), font, bounds, foreColor, TextFlags);
+                var Bounds = bounds.ToGDI();  // HACK: @GRID
+                TextRenderer.DrawText(gfx, value.ToString(), font, Bounds, foreColor, TextFlags);
             }
         }
     }

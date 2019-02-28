@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace InCoding.DList
 {
@@ -72,6 +73,44 @@ namespace InCoding.DList
             var AlignedRectangle = new Rectangle(bounds.Left + HorizontalOffset, bounds.Top + VerticalOffset, alignmentSize.Width, alignmentSize.Height);
 
             return AlignedRectangle;
+        }
+
+        public static TextFormatFlags ConvertAlignmentToTextFormatFlags(ContentAlignment alignment)
+        {
+            TextFormatFlags Flags = TextFormatFlags.Default;
+
+            switch (alignment)
+            {
+                case ContentAlignment.TopLeft:
+                    Flags |= TextFormatFlags.Top | TextFormatFlags.Left;
+                    break;
+                case ContentAlignment.TopCenter:
+                    Flags |= TextFormatFlags.Top | TextFormatFlags.HorizontalCenter;
+                    break;
+                case ContentAlignment.TopRight:
+                    Flags |= TextFormatFlags.Top | TextFormatFlags.Right;
+                    break;
+                case ContentAlignment.MiddleLeft:
+                    Flags |= TextFormatFlags.VerticalCenter | TextFormatFlags.Left;
+                    break;
+                case ContentAlignment.MiddleCenter:
+                    Flags |= TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
+                    break;
+                case ContentAlignment.MiddleRight:
+                    Flags |= TextFormatFlags.VerticalCenter | TextFormatFlags.Right;
+                    break;
+                case ContentAlignment.BottomLeft:
+                    Flags |= TextFormatFlags.Bottom | TextFormatFlags.Left;
+                    break;
+                case ContentAlignment.BottomCenter:
+                    Flags |= TextFormatFlags.Bottom | TextFormatFlags.HorizontalCenter;
+                    break;
+                case ContentAlignment.BottomRight:
+                    Flags |= TextFormatFlags.Bottom | TextFormatFlags.Right;
+                    break;
+            }
+
+            return Flags;
         }
 
         public static void CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue, PropertyChangedEventTrigger eventTrigger)

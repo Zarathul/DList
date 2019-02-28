@@ -4,13 +4,10 @@ using Vs = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
-    public class CheckBoxCellRenderer : IComplexRenderer
+    public class CheckBoxCellRenderer : VisualStyleRendererBase, IComplexRenderer
     {
-        public ContentAlignment Alignment { get; set; }
-
-        public CheckBoxCellRenderer(ContentAlignment alignment = ContentAlignment.MiddleCenter)
+        public CheckBoxCellRenderer(ContentAlignment alignment = DefaultAlignment)
         {
-            Alignment = alignment;
         }
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)

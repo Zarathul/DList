@@ -3,19 +3,12 @@ using System.Windows.Forms;
 
 namespace InCoding.DList.Rendering
 {
-    public class TextCellRenderer : IComplexRenderer
+    public class TextCellRenderer : VisualStyleRendererBase, IComplexRenderer
     {
         public string Format { get; set; }
 
-        private static readonly TextFormatFlags TextFlags = TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis;
-
-        public TextCellRenderer() : this(null)
+        public TextCellRenderer(ContentAlignment alignment = DefaultAlignment) : base(alignment)
         {
-        }
-
-        public TextCellRenderer(string format)
-        {
-            Format = format;
         }
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
@@ -27,7 +20,8 @@ namespace InCoding.DList.Rendering
 
             if (value != null)
             {
-                TextRenderer.DrawText(gfx, (Format != null) ? string.Format(Format, value) : value.ToString(), font, bounds, foreColor, TextFlags);
+                var Bounds = bounds.ToGDI();  // HACK: @GRID
+                TextRenderer.DrawText(gfx, (Format != null) ? string.Format(Format, value) : value.ToString(), font, Bounds, foreColor, TextFlags);
             }
         }
     }

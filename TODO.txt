@@ -2,7 +2,6 @@ Things to REMEMBER, THINK about, or to DO
 - Maybe the grid should not overlap cells ?
 - Maybe cache brushes and pens?
 
-- Add alignment options to cell renderers where it makes sense.
 - IntegralHeight mode
 - All kinds of events: Header click, item click etc.
 - Cell editing.

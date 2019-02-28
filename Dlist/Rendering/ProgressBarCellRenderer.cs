@@ -26,7 +26,7 @@ namespace InCoding.DList.Rendering
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
-            // HACK: 3 is subtracted here instead of 2 as a workaround to not draw under the grid if it's enabled.
+            // HACK: @GRID 3 is subtracted here instead of 2 as a workaround to not draw under the grid if it's enabled.
             var Bounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, bounds.Width - 3, bounds.Height - 3);
 
             using (var backgroundBrush = new SolidBrush(backColor))
