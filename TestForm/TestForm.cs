@@ -17,11 +17,16 @@ namespace InCoding
             var Column1 = new Column("String");
             Column1.ValueGetter = (object item) => ((TestItem)item).Name;
             Column1.Width = 215;
+
             var Column2 = new Column("Numeric");
             Column2.ValueGetter = (object item) => ((TestItem)item).NumericValue;
+            Column2.CellRenderer = new ProgressBarCellRenderer(0, 100);
+
             var Column3 = new Column("Boolean");
             Column3.Width = 150;
             Column3.ValueGetter = (object item) => ((TestItem)item).Flag;
+            Column3.CellRenderer = new CheckBoxCellRenderer();
+
             var Column4 = new Column("DateTime");
             Column4.ValueGetter = (object item) => ((TestItem)item).Date;
             var Temp = (TextCellRenderer)Column4.CellRenderer;
@@ -32,8 +37,20 @@ namespace InCoding
             dList1.Columns.Add(Column3);
             dList1.Columns.Add(Column4);
 
+            // Progressbar test items
+            var PTestItem0 = TestItem.GenerateRandom(0);
+            PTestItem0.NumericValue = 0;
+            var PTestItem1 = TestItem.GenerateRandom(1);
+            PTestItem1.NumericValue = 50;
+            var PTestItem2 = TestItem.GenerateRandom(2);
+            PTestItem2.NumericValue = 100;
+
+            dList1.Items.Add(PTestItem0);
+            dList1.Items.Add(PTestItem1);
+            dList1.Items.Add(PTestItem2);
+
             // Items
-            for (int i = 0; i < 30; i++)
+            for (int i = 3; i < 30; i++)
             {
                 var Item = TestItem.GenerateRandom(i);
                 dList1.Items.Add(Item);

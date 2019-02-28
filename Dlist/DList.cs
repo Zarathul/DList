@@ -22,19 +22,6 @@ using InCoding.DList.Rendering;
  * to affected framework methods Utils.ToGDI() should be used.
  */
 
-// TODO: Remove
-/*
- * Things to REMEMBER, THINK about, or to DO
- * - Maybe cache brushes and pens?
- *
- * - Autosize column on grip doubleclick
- * - IntegralHeight mode
- * - All kinds of events: Header click, item click etc.
- * - More cell renderers, checkbox for bools, progressbar for ints etc.
- * - Cell editing.
- * - Better/fixed designer support.
-*/
-
 namespace InCoding.DList
 {
     public class DList : Control
