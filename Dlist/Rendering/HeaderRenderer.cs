@@ -2,8 +2,6 @@
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 
-using InCoding.DList;
-
 namespace InCoding.DList.Rendering
 {
     public class HeaderRenderer : VisualStyleRendererBase, IComplexRenderer
