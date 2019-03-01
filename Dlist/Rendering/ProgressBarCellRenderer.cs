@@ -39,81 +39,70 @@ namespace InCoding.DList.Rendering
             int Value = Utils.Clamp((int)value, MinValue, MaxValue);
             double PercentageFactor = ((double)Value + Math.Abs(MinValue)) / (MaxValue - MinValue);
 
+
+            int BarThickness = 0;
+            Rectangle BarBounds;
+            Rectangle ChunkBounds;
+
             if (Horizontal)
             {
+                BarThickness = (int)Math.Floor(PercentageFactor * (Bounds.Width - 2));
+                BarThickness = Utils.Clamp(BarThickness, 0, Bounds.Width - 2);
+                BarBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1, BarThickness, Bounds.Height - 2);
+                ChunkBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1, ActualChunkThickness, Bounds.Height - 2);
                 ProgressBarRenderer.DrawHorizontalBar(gfx, Bounds);
+            }
+            else
+            {
+                BarThickness = (int)Math.Floor(PercentageFactor * (Bounds.Height - 2));
+                BarThickness = Utils.Clamp(BarThickness, 0, Bounds.Height - 2);
+                BarBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1 + (Bounds.Height - 2 - BarThickness), Bounds.Width - 2, BarThickness);
+                ChunkBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1 + (Bounds.Height - 2 - ActualChunkThickness), Bounds.Width - 2, ActualChunkThickness);
+                ProgressBarRenderer.DrawVerticalBar(gfx, Bounds);
+            }
 
-                int BarWidth = (int)Math.Floor(PercentageFactor * (Bounds.Width - 2));
+            if (BarThickness == 0 && Value > MinValue)
+            {
+                // If value is greater than the minimal value at least show something. Even if it's only one pixel.
+                BarThickness = 1;
+            }
 
-                if (BarWidth == 0 && Value > MinValue)
+            int ChunkCount = (int)Math.Floor((BarThickness + ActualChunkSpaceThickness) / (double)TotalChunkThickness);
+            int RemainingBarThickness = BarThickness - ChunkCount * TotalChunkThickness;
+
+            if (ActualChunkSpaceThickness <= 0)
+            {
+                // No chunks
+                ProgressBarRenderer.DrawHorizontalChunks(gfx, BarBounds);
+            }
+            else
+            {
+                if (Horizontal)
                 {
-                    // If value is greater than zero at least show something. Even if it's only one pixel.
-                    BarWidth = 1;
-                }
-
-                BarWidth = Utils.Clamp(BarWidth, 0, Bounds.Width - 2);
-
-                if (ActualChunkSpaceThickness <= 0)
-                {
-                    // No chunks
-                    var BarBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1, BarWidth, Bounds.Height - 2);
-                    ProgressBarRenderer.DrawHorizontalChunks(gfx, BarBounds);
-                }
-                else
-                {
-                    int ChunkCount = (int)Math.Floor((BarWidth + ActualChunkSpaceThickness) / (double)TotalChunkThickness);
-                    var ChunkBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1, ActualChunkThickness, Bounds.Height - 2);
-                    int RemainingBarWidth = BarWidth - ChunkCount * TotalChunkThickness;
-
                     for (int i = 0; i < ChunkCount; i++)
                     {
                         ProgressBarRenderer.DrawHorizontalChunks(gfx, ChunkBounds);
                         ChunkBounds.X += TotalChunkThickness;
                     }
 
-                    if (RemainingBarWidth > 0)
+                    if (RemainingBarThickness > 0)
                     {
-                        ChunkBounds.Width = RemainingBarWidth;
+                        ChunkBounds.Width = RemainingBarThickness;
                         ProgressBarRenderer.DrawHorizontalChunks(gfx, ChunkBounds);
                     }
                 }
-            }
-            else
-            {
-                ProgressBarRenderer.DrawVerticalBar(gfx, Bounds);
-
-                int BarHeight = (int)Math.Floor(PercentageFactor * (Bounds.Height - 2));
-
-                if (BarHeight == 0 && Value > MinValue)
-                {
-                    // If value is greater than zero at least show something. Even if it's only one pixel.
-                    BarHeight = 1;
-                }
-
-                BarHeight = Utils.Clamp(BarHeight, 0, Bounds.Height - 2);
-
-                if (ActualChunkSpaceThickness <= 0)
-                {
-                    // No chunks
-                    var BarBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1 + (Bounds.Height - 2 - BarHeight), Bounds.Width - 2, BarHeight);
-                    ProgressBarRenderer.DrawHorizontalChunks(gfx, BarBounds);
-                }
                 else
                 {
-                    int ChunkCount = (int)Math.Floor((BarHeight + ActualChunkSpaceThickness) / (double)TotalChunkThickness);
-                    var ChunkBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1 + (Bounds.Height - 2 - ActualChunkThickness), Bounds.Width - 2, ActualChunkThickness);
-                    int RemainingBarHeight = BarHeight - ChunkCount * TotalChunkThickness;
-
                     for (int i = 0; i < ChunkCount; i++)
                     {
                         ProgressBarRenderer.DrawVerticalChunks(gfx, ChunkBounds);
                         ChunkBounds.Y -= TotalChunkThickness;
                     }
 
-                    if (RemainingBarHeight > 0)
+                    if (RemainingBarThickness > 0)
                     {
-                        ChunkBounds.Height = RemainingBarHeight;
-                        ChunkBounds.Y += (TotalChunkThickness - RemainingBarHeight - 1);
+                        ChunkBounds.Height = RemainingBarThickness;
+                        ChunkBounds.Y += (TotalChunkThickness - RemainingBarThickness - 1);
                         ProgressBarRenderer.DrawVerticalChunks(gfx, ChunkBounds);
                     }
                 }
