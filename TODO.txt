@@ -3,7 +3,6 @@ Things to REMEMBER, THINK about, or to DO
 - Maybe cache brushes and pens?
 
 - Consolidate the code in ProgressBarCellRenderer for horizontal and vertical bars. Both codepaths are almost identical.
-- IntegralHeight mode
 - All kinds of events: Header click, item click etc.
 - Cell editing.
 - Better/fixed designer support.

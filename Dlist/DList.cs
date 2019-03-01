@@ -184,6 +184,10 @@ namespace InCoding.DList
         [Category("Layout")]
         public bool AllowResize { get; set; } = true;
 
+        [DefaultValue(false)]
+        [Category("Layout")]
+        public bool IntegralHeight { get; set; } = false;
+
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Rectangle ContentRectangle { get; private set; }
@@ -334,6 +338,25 @@ namespace InCoding.DList
         }
 
         #region Drawing
+
+        protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
+        {
+            if (IntegralHeight)
+            {
+                int ContentHeight = (HScroll.Visible) ? ContentRectangle.Height + HScroll.Height + 2 : ContentRectangle.Height;
+                // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
+                int BorderHeight = (ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight: 0;
+
+                height = (ItemHeight * (int)Math.Round(height / (double)ItemHeight)) + BorderHeight;
+
+                if (HScroll.Visible)
+                {
+                    height += HScroll.Height + 2;
+                }
+            }
+
+            base.SetBoundsCore(x, y, width, height, specified);
+        }
 
         protected override void OnPaint(PaintEventArgs e)
         {
