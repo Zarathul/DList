@@ -1,6 +1,7 @@
 Things to REMEMBER, THINK about, or to DO
 - Maybe the grid should not overlap cells ?
 - Maybe cache brushes and pens?
+- Maybe add an internal dictionary to NotifyingCollection for faster containment checks. Also being able to temporarily suspend event firing might be useful (AddRange() ??).
 
 - All kinds of events: Header click, item click etc.
 - Cell editing.

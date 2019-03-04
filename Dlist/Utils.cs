@@ -5,8 +5,6 @@ using System.Windows.Forms;
 
 namespace InCoding.DList
 {
-    public delegate void PropertyChangedEventTrigger(PropertyChangedEventArgs args);
-
     public static class Utils
     {
         public static int Clamp(this int value, int min, int max)
@@ -17,6 +15,15 @@ namespace InCoding.DList
         public static Rectangle ToGDI(this Rectangle source)
         {
             return new Rectangle(source.X, source.Y, source.Width - 1, source.Height - 1);
+        }
+
+        public static Rectangle GetRectangleFromPoints(Point p0, Point p1)
+        {
+            var RectangleStart = new Point(Math.Min(p0.X, p1.X), Math.Min(p0.Y, p1.Y));
+            var RectangleEnd = new Point(Math.Max(p0.X, p1.X), Math.Max(p0.Y, p1.Y));
+            var RectangleSize = new Size(RectangleEnd.X - RectangleStart.X, RectangleEnd.Y - RectangleStart.Y);
+
+            return new Rectangle(RectangleStart, RectangleSize);
         }
 
         public static Rectangle AlignInRectangle(Rectangle bounds, Size alignmentSize, ContentAlignment alignment)
@@ -113,7 +120,7 @@ namespace InCoding.DList
             return Flags;
         }
 
-        public static void CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue, PropertyChangedEventTrigger eventTrigger)
+        public static void CheckPropertyChanged<T>(string propertyName, ref T oldValue, ref T newValue, Action<PropertyChangedEventArgs> eventTrigger)
         {
             if (oldValue == null && newValue == null) return;
 

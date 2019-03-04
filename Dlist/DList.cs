@@ -339,25 +339,6 @@ namespace InCoding.DList
 
         #region Drawing
 
-        protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
-        {
-            if (IntegralHeight)
-            {
-                int ContentHeight = (HScroll.Visible) ? ContentRectangle.Height + HScroll.Height + 2 : ContentRectangle.Height;
-                // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
-                int BorderHeight = (ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight: 0;
-
-                height = (ItemHeight * (int)Math.Round(height / (double)ItemHeight)) + BorderHeight;
-
-                if (HScroll.Visible)
-                {
-                    height += HScroll.Height + 2;
-                }
-            }
-
-            base.SetBoundsCore(x, y, width, height, specified);
-        }
-
         protected override void OnPaint(PaintEventArgs e)
         {
             var Gfx = e.Graphics;
@@ -524,7 +505,7 @@ namespace InCoding.DList
 
         protected void DrawSelectionRectangle(Graphics gfx)
         {
-            var SelectionRectangle = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd).ToGDI();
+            var SelectionRectangle = Utils.GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd).ToGDI();
             SelectionRectangle.Offset(-HScroll.Value, -VScroll.Value);
 
             // TODO: remove
@@ -810,22 +791,9 @@ namespace InCoding.DList
                 PressedColumnIndex = HotColumnIndex;
                 HotColumnIndex = -1;
             }
-            else if (AllowMultipleSelectedItems && e.Button == MouseButtons.Left)   // Begin selection rectangle handling
+            else if (AllowMultipleSelectedItems && e.Button == MouseButtons.Left)
             {
-                HotItemIndex = -1;
-
-                if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
-                {
-                    SelectedItemIndices.Clear();
-                }
-                else
-                {
-                    AddToSelection = true;
-                }
-
-                ItemSelectionStart = new Point(e.X + ContentRectangle.X + HScroll.Value, e.Y + ContentRectangle.Y + VScroll.Value);
-                // TODO: Remove
-                //Console.WriteLine("Select START - {0}", ItemSelectionStart);
+                StartSelectionRectangle(e.X, e.Y);
             }
 
             base.OnMouseDown(e);
@@ -841,72 +809,7 @@ namespace InCoding.DList
 
             if (AllowMultipleSelectedItems)
             {
-                if (Columns.Count > 0 
-                    && Items.Count > 0
-                    && !ItemSelectionStart.IsEmpty
-                    && !ItemSelectionEnd.IsEmpty)
-                {
-                    // Finish selection rectangle handling
-
-                    // TODO: Remove
-                    //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
-
-                    var Selection = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
-
-                    int ItemsStartY = ContentRectangle.Y + ItemHeight;
-                    int ItemsEndY = ItemsStartY + Items.Count * ItemHeight - 1;
-                    bool VerticalOverlap = (Selection.Y >= ItemsStartY) && (Selection.Y <= ItemsEndY);
-                    bool HorizontalOverlap = false;
-
-                    if (VerticalOverlap)
-                    {
-                        // Check if the selection rectangle does horizontally overlap with any items
-                        int RightEdge = ContentRectangle.X;
-                        
-                        foreach (var column in Columns)
-                        {
-                            RightEdge += column.Width;
-
-                            if (Selection.X < RightEdge)
-                            {
-                                HorizontalOverlap = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (HorizontalOverlap && VerticalOverlap)
-                    {
-                        int FirstItemIndex = (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight);
-                        int LastItemIndex = Math.Min(Items.Count - 1, (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight));
-
-                        for (int i = FirstItemIndex; i <= LastItemIndex; i++)
-                        {
-                            if (AddToSelection)
-                            {
-                                if (!SelectedItemIndices.Contains(i))
-                                {
-                                    SelectedItemIndices.Add(i);
-                                }
-                            }
-                            else
-                            {
-                                SelectedItemIndices.Add(i);
-                            }
-                        }
-
-                        // Focus the last item in the direction the selection rectangle was drawn
-                        FocusedItemIndex = (ItemSelectionStart.Y < ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
-
-                        // TODO: remove
-                        //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
-                    }
-                }
-
-                // Clean up selection rectangle data
-                ItemSelectionStart = Point.Empty;
-                ItemSelectionEnd = Point.Empty;
-                AddToSelection = false;
+                EndSelectionRectangle();
             }
 
             base.OnMouseUp(e);
@@ -958,6 +861,7 @@ namespace InCoding.DList
 
                 if (AllowResize)
                 {
+                    // Change the mouse cursor if columns can be resized an the cursor inside the grip range.
                     if (HotColumnIndex >= 0)
                     {
                         int RightColumnEdge = ContentRectangle.X;
@@ -1019,19 +923,9 @@ namespace InCoding.DList
                 }
                 else
                 {
-                    // Update the selection rectangle
                     if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
                     {
-                        int ScrolledX = e.X + ContentRectangle.X + HScroll.Value;
-                        int ScrolledY = e.Y + ContentRectangle.Y + VScroll.Value;
-
-                        if ((Math.Abs(ItemSelectionStart.X - ScrolledX) + Math.Abs(ItemSelectionStart.Y - ScrolledY)) >= 3)
-                        {
-                            ItemSelectionEnd = new Point(ScrolledX, ScrolledY);
-                        }
-
-                        // TODO: Remove
-                        //Console.WriteLine("Select UPDATE - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
+                        UpdateSelectionRectangle(e.X, e.Y);
                     }
                 }
             }
@@ -1207,14 +1101,38 @@ namespace InCoding.DList
 
         #endregion
 
-        private Rectangle GetRectangleFromPoints(Point p0, Point p1)
-        {
-            var RectangleStart = new Point(Math.Min(p0.X, p1.X), Math.Min(p0.Y, p1.Y));
-            var RectangleEnd = new Point(Math.Max(p0.X, p1.X), Math.Max(p0.Y, p1.Y));
-            var RectangleSize = new Size(RectangleEnd.X - RectangleStart.X, RectangleEnd.Y - RectangleStart.Y);
+        #region Misc
 
-            return new Rectangle(RectangleStart, RectangleSize);
+        protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
+        {
+            if (IntegralHeight)
+            {
+                int ContentHeight = (HScroll.Visible) ? ContentRectangle.Height + HScroll.Height + 2 : ContentRectangle.Height;
+                // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
+                int BorderHeight = (ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight : 0;
+
+                height = (ItemHeight * (int)Math.Round(height / (double)ItemHeight)) + BorderHeight;
+
+                if (HScroll.Visible)
+                {
+                    height += HScroll.Height + 2;
+                }
+            }
+
+            base.SetBoundsCore(x, y, width, height, specified);
         }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            if (AllowMultipleSelectedItems)
+            {
+                EndSelectionRectangle();
+            }
+
+            base.OnLostFocus(e);
+        }
+
+        #endregion
 
         public int GetItemIndexAt(int x, int y)
         {
@@ -1307,6 +1225,130 @@ namespace InCoding.DList
                     SelectedItemIndices.Add(i);
                 }
             }
+        }
+
+        private void StartSelectionRectangle(int x, int y)
+        {
+            HotItemIndex = -1;
+
+            if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
+            {
+                SelectedItemIndices.Clear();
+            }
+            else
+            {
+                AddToSelection = true;
+            }
+
+            ItemSelectionStart = new Point(x + ContentRectangle.X + HScroll.Value, y + ContentRectangle.Y + VScroll.Value);
+            // TODO: Remove
+            //Console.WriteLine("Select START - {0}", ItemSelectionStart);
+        }
+
+        private void UpdateSelectionRectangle(int x, int y)
+        {
+            // Update the selection rectangle
+            int ScrolledX = x + ContentRectangle.X + HScroll.Value;
+            int ScrolledY = y + ContentRectangle.Y + VScroll.Value;
+
+            if ((Math.Abs(ItemSelectionStart.X - ScrolledX) + Math.Abs(ItemSelectionStart.Y - ScrolledY)) >= 3)
+            {
+                ItemSelectionEnd = new Point(ScrolledX, ScrolledY);
+            }
+
+            // Autoscroll up or down if the selection rectangle is dragged above or beneath the item list.
+            if (y >= ContentRectangle.Bottom || y < (ContentRectangle.Y + ItemHeight))
+            {
+                if (ItemSelectionEnd.Y > ItemSelectionStart.Y)
+                {
+                    int MaxVScroll = VScroll.Maximum - VScroll.LargeChange + 1;
+
+                    if (VScroll.Value < MaxVScroll)
+                    {
+                        VScroll.Value += Math.Min(MaxVScroll - VScroll.Value, VScroll.SmallChange);
+                    }
+                }
+                else
+                {
+                    if (VScroll.Value > VScroll.Minimum)
+                    {
+                        VScroll.Value -= Math.Min(VScroll.Value, VScroll.SmallChange);
+                    }
+                }
+            }
+
+            // TODO: Remove
+            //Console.WriteLine("Select UPDATE - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
+        }
+
+        private void EndSelectionRectangle()
+        {
+            if (Columns.Count > 0
+                && Items.Count > 0
+                && !ItemSelectionStart.IsEmpty
+                && !ItemSelectionEnd.IsEmpty)
+            {
+                // Finish selection rectangle handling
+
+                // TODO: Remove
+                //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
+
+                var Selection = Utils.GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
+
+                int ItemsStartY = ContentRectangle.Y + ItemHeight;
+                int ItemsEndY = ItemsStartY + Items.Count * ItemHeight - 1;
+                bool VerticalOverlap = (Selection.Y <= ItemsEndY);
+                bool HorizontalOverlap = false;
+
+                if (VerticalOverlap)
+                {
+                    // Check if the selection rectangle does horizontally overlap with any items
+                    int RightEdge = ContentRectangle.X;
+
+                    foreach (var column in Columns)
+                    {
+                        RightEdge += column.Width;
+
+                        if (Selection.X < RightEdge)
+                        {
+                            HorizontalOverlap = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (HorizontalOverlap && VerticalOverlap)
+                {
+                    int FirstItemIndex = Math.Max(0, (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight));
+                    int LastItemIndex = Math.Min(Items.Count - 1, (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight));
+
+                    for (int i = FirstItemIndex; i <= LastItemIndex; i++)
+                    {
+                        if (AddToSelection)
+                        {
+                            if (!SelectedItemIndices.Contains(i))
+                            {
+                                SelectedItemIndices.Add(i);
+                            }
+                        }
+                        else
+                        {
+                            SelectedItemIndices.Add(i);
+                        }
+                    }
+
+                    // Focus the last item in the direction the selection rectangle was drawn
+                    FocusedItemIndex = (ItemSelectionStart.Y < ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
+
+                    // TODO: remove
+                    //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
+                }
+            }
+
+            // Clean up selection rectangle data
+            ItemSelectionStart = Point.Empty;
+            ItemSelectionEnd = Point.Empty;
+            AddToSelection = false;
         }
     }
 }
