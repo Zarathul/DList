@@ -383,9 +383,6 @@ namespace InCoding.DList
             }
 
             base.OnPaint(e);
-
-            // TODO: Remove
-            //Console.WriteLine("CR: {0} vs {1}", ContentRectangle, (Items.Count + 1) * ItemHeight);
         }
 
         protected Rectangle DrawBackground(Graphics gfx)
@@ -647,6 +644,35 @@ namespace InCoding.DList
                     }
                     break;
 
+#if DEBUG
+                case Keys.F12:
+                    int TotalColumnWidth = 0;
+
+                    foreach (var column in Columns)
+                    {
+                        TotalColumnWidth += column.Width;
+                    }
+
+                    var HeadersArea = new Rectangle(ContentRectangle.X, ContentRectangle.Y, TotalColumnWidth, ItemHeight);
+                    var ItemArea = new Rectangle(ContentRectangle.X, HeadersArea.Bottom, TotalColumnWidth, Items.Count * ItemHeight);
+                    Console.WriteLine("-------------------------------------------------------------------------------");
+                    Console.WriteLine("| Right and bottom are the actual coordinates not the rectangle values.       |");
+                    Console.WriteLine("-------------------------------------------------------------------------------");
+                    Console.WriteLine("|            Content: {0} -> Right:{1}, Bottom:{2}", ContentRectangle, ContentRectangle.Right - 1, ContentRectangle.Bottom - 1);
+                    Console.WriteLine("|            Headers: {0} -> Right:{1}, Bottom:{2}", HeadersArea, HeadersArea.Right - 1, HeadersArea.Bottom - 1);
+                    Console.WriteLine("|              Items: {0} -> Right:{1}, Bottom:{2}", ItemArea, ItemArea.Right - 1, ItemArea.Bottom - 1);
+                    Console.WriteLine("|  SelectedItemCount: {0}", SelectedItemIndices.Count);
+                    Console.WriteLine("|  SelectedItemIndex: {0}", SelectedItemIndex);
+                    Console.WriteLine("|   FocusedItemIndex: {0}", FocusedItemIndex);
+                    Console.WriteLine("|       HotItemIndex: {0}", HotItemIndex);
+                    Console.WriteLine("|     HotColumnIndex: {0}", HotColumnIndex);
+                    Console.WriteLine("| PressedColumnIndex: {0}", PressedColumnIndex);
+                    Console.WriteLine("-------------------------------------------------------------------------------");
+
+                    e.Handled = true;
+                    break;
+#endif
+
                 default:
                     break;
             }
@@ -825,26 +851,34 @@ namespace InCoding.DList
                     // TODO: Remove
                     //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
 
-                    // Check if the selection rectangle does horizontally overlap with any items
                     var Selection = GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
-                    int RightEdge = ContentRectangle.X;
+
+                    int ItemsStartY = ContentRectangle.Y + ItemHeight;
+                    int ItemsEndY = ItemsStartY + Items.Count * ItemHeight - 1;
+                    bool VerticalOverlap = (Selection.Y >= ItemsStartY) && (Selection.Y <= ItemsEndY);
                     bool HorizontalOverlap = false;
 
-                    foreach (var column in Columns)
+                    if (VerticalOverlap)
                     {
-                        RightEdge += column.Width;
-
-                        if (Selection.X < RightEdge)
+                        // Check if the selection rectangle does horizontally overlap with any items
+                        int RightEdge = ContentRectangle.X;
+                        
+                        foreach (var column in Columns)
                         {
-                            HorizontalOverlap = true;
-                            break;
+                            RightEdge += column.Width;
+
+                            if (Selection.X < RightEdge)
+                            {
+                                HorizontalOverlap = true;
+                                break;
+                            }
                         }
                     }
 
-                    if (HorizontalOverlap)
+                    if (HorizontalOverlap && VerticalOverlap)
                     {
                         int FirstItemIndex = (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight);
-                        int LastItemIndex = (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight);
+                        int LastItemIndex = Math.Min(Items.Count - 1, (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight));
 
                         for (int i = FirstItemIndex; i <= LastItemIndex; i++)
                         {
@@ -866,7 +900,6 @@ namespace InCoding.DList
 
                         // TODO: remove
                         //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
-                        //Console.WriteLine("Select INDICES - {0}", SelectedItemIndices.Count);
                     }
                 }
 

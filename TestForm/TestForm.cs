@@ -50,7 +50,7 @@ namespace InCoding
             dList1.Items.Add(PTestItem2);
 
             // Items
-            for (int i = 3; i < 30; i++)
+            for (int i = 3; i < 20; i++)
             {
                 var Item = TestItem.GenerateRandom(i);
                 dList1.Items.Add(Item);
