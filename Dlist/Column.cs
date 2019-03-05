@@ -1,18 +1,14 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Drawing;
 
 using InCoding.DList.Rendering;
+using InCoding.DList.Editing;
 
 namespace InCoding.DList
 {
     public delegate object ValueGetterFunc(object item);
     public delegate void ValueSetterFunc(object item, object value);
-
-    public enum HeaderStyle
-    {
-        Static,
-        Moving
-    }
 
     public class Column : INotifyPropertyChanged
     {
@@ -20,8 +16,8 @@ namespace InCoding.DList
         private int _Width = 80;
         private Font _HeaderFont;
         private Font _ItemFont;
-        private HeaderStyle _HeaderStyle = HeaderStyle.Static;
         private IComplexRenderer _CellRenderer = new TextCellRenderer();
+        private ICellEditor _CellEditor;
         private ValueGetterFunc _ValueGetter;
         private ValueSetterFunc _ValueSetter;
 
@@ -49,10 +45,9 @@ namespace InCoding.DList
             set => Utils.CheckPropertyChanged(nameof(ItemFont), ref _ItemFont, ref value, OnPropertyChanged);
         }
 
-        public HeaderStyle HeaderStyle
+        public bool CanEdit
         {
-            get => _HeaderStyle;
-            set => Utils.CheckPropertyChanged(nameof(HeaderStyle), ref _HeaderStyle, ref value, OnPropertyChanged);
+            get => (_ValueGetter != null && _ValueSetter != null && _CellEditor != null);
         }
 
         [Browsable(false)]
@@ -61,6 +56,14 @@ namespace InCoding.DList
         {
             get => _CellRenderer;
             set => Utils.CheckPropertyChanged(nameof(CellRenderer), ref _CellRenderer, ref value, OnPropertyChanged);
+        }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public ICellEditor CellEditor
+        {
+            get => _CellEditor;
+            set => Utils.CheckPropertyChanged(nameof(CellEditor), ref _CellEditor, ref value, OnPropertyChanged);
         }
 
         [Browsable(false)]

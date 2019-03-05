@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using InCoding.DList;
 using InCoding.DList.Collections;
 using InCoding.DList.Rendering;
+using InCoding.DList.Editing;
 
 namespace InCoding
 {
@@ -16,6 +17,8 @@ namespace InCoding
             // Columns
             var Column1 = new Column("String");
             Column1.ValueGetter = (object item) => ((TestItem)item).Name;
+            Column1.ValueSetter = (object item, object value) => ((TestItem)item).Name = value.ToString();
+            Column1.CellEditor = new TextCellEditor();
             Column1.Width = 215;
 
             var Column2 = new Column("Numeric");
@@ -25,7 +28,9 @@ namespace InCoding
             var Column3 = new Column("Boolean");
             Column3.Width = 150;
             Column3.ValueGetter = (object item) => ((TestItem)item).Flag;
+            Column3.ValueSetter = (object item, object value) => ((TestItem)item).Flag = (bool)value;
             Column3.CellRenderer = new CheckBoxCellRenderer();
+            Column3.CellEditor = new BooleanCellEditor();
 
             var Column4 = new Column("DateTime");
             Column4.ValueGetter = (object item) => ((TestItem)item).Date;

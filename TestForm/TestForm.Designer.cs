@@ -150,11 +150,12 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dList1.HighlightTextColor = System.Drawing.SystemColors.HighlightText;
             this.dList1.HotItemColor = System.Drawing.SystemColors.HotTrack;
+            this.dList1.IntegralHeight = true;
             this.dList1.Location = new System.Drawing.Point(476, 12);
             this.dList1.Name = "dList1";
             this.dList1.SelectedItemColor = System.Drawing.SystemColors.Highlight;
             this.dList1.SelectionRectangleColor = System.Drawing.SystemColors.HotTrack;
-            this.dList1.Size = new System.Drawing.Size(479, 336);
+            this.dList1.Size = new System.Drawing.Size(479, 338);
             this.dList1.TabIndex = 3;
             this.dList1.Text = "dList1";
             // 

@@ -3,7 +3,8 @@ Things to REMEMBER, THINK about, or to DO
 - Maybe cache brushes and pens?
 - Maybe add an internal dictionary to NotifyingCollection for faster containment checks. Also being able to temporarily suspend event firing might be useful (AddRange() ??).
 
+- Finish and improve cell editing.
+- Fix SetBoundsCore(). It fucks up the controls size in IntegralHeight mode when the form is minized.
 - All kinds of events: Header click, item click etc.
-- Cell editing.
 - Better/fixed designer support.
 - Autosize column on grip doubleclick

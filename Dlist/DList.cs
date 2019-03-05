@@ -6,6 +6,7 @@ using System.Windows.Forms.VisualStyles;
 
 using InCoding.DList.Collections;
 using InCoding.DList.Rendering;
+using InCoding.DList.Editing;
 
 /*
  * Tag notes:
@@ -300,7 +301,6 @@ namespace InCoding.DList
 
         protected override Size DefaultMinimumSize => new Size(4 * ItemHeight, ItemHeight * 2);
 
-
         public DList()
         {
             SetStyle(
@@ -309,6 +309,8 @@ namespace InCoding.DList
                 ControlStyles.UserPaint |
                 ControlStyles.ResizeRedraw,
                 true);
+
+            SetStyle(ControlStyles.StandardDoubleClick, false);
 
             HScroll = new HScrollBar
             {
@@ -350,7 +352,7 @@ namespace InCoding.DList
 
             if (Items.Count > 0)
             {
-                int FirstVisibleItemIndex = (!VScroll.Visible) ? 0 : Math.Max(0, (VScroll.Value - ItemHeight) / ItemHeight);
+                int FirstVisibleItemIndex = GetFirstVisibleItemIndex();
                 DrawItems(Gfx, FirstVisibleItemIndex);
 
                 if (FocusedItemIndex >= 0) DrawFocusRectangle(Gfx);
@@ -639,15 +641,30 @@ namespace InCoding.DList
                     Console.WriteLine("-------------------------------------------------------------------------------");
                     Console.WriteLine("| Right and bottom are the actual coordinates not the rectangle values.       |");
                     Console.WriteLine("-------------------------------------------------------------------------------");
-                    Console.WriteLine("|            Content: {0} -> Right:{1}, Bottom:{2}", ContentRectangle, ContentRectangle.Right - 1, ContentRectangle.Bottom - 1);
-                    Console.WriteLine("|            Headers: {0} -> Right:{1}, Bottom:{2}", HeadersArea, HeadersArea.Right - 1, HeadersArea.Bottom - 1);
-                    Console.WriteLine("|              Items: {0} -> Right:{1}, Bottom:{2}", ItemArea, ItemArea.Right - 1, ItemArea.Bottom - 1);
-                    Console.WriteLine("|  SelectedItemCount: {0}", SelectedItemIndices.Count);
-                    Console.WriteLine("|  SelectedItemIndex: {0}", SelectedItemIndex);
-                    Console.WriteLine("|   FocusedItemIndex: {0}", FocusedItemIndex);
-                    Console.WriteLine("|       HotItemIndex: {0}", HotItemIndex);
-                    Console.WriteLine("|     HotColumnIndex: {0}", HotColumnIndex);
-                    Console.WriteLine("| PressedColumnIndex: {0}", PressedColumnIndex);
+                    Console.WriteLine("|               Content: {0} -> Right:{1}, Bottom:{2}", ContentRectangle, ContentRectangle.Right - 1, ContentRectangle.Bottom - 1);
+                    Console.WriteLine("|               Headers: {0} -> Right:{1}, Bottom:{2}", HeadersArea, HeadersArea.Right - 1, HeadersArea.Bottom - 1);
+                    Console.WriteLine("|                 Items: {0} -> Right:{1}, Bottom:{2}", ItemArea, ItemArea.Right - 1, ItemArea.Bottom - 1);
+                    Console.WriteLine("|     SelectedItemCount: {0}", SelectedItemIndices.Count);
+                    Console.WriteLine("|     SelectedItemIndex: {0}", SelectedItemIndex);
+                    Console.WriteLine("|      FocusedItemIndex: {0}", FocusedItemIndex);
+                    Console.WriteLine("|          HotItemIndex: {0}", HotItemIndex);
+                    Console.WriteLine("|        HotColumnIndex: {0}", HotColumnIndex);
+                    Console.WriteLine("|    PressedColumnIndex: {0}", PressedColumnIndex);
+                    Console.WriteLine("| FirstVisibleItemIndex: {0}", GetFirstVisibleItemIndex());
+                    Console.WriteLine("|  LastVisibleItemIndex: {0}", GetLastVisibleItemIndex());
+                    Console.Write(    "|       SelectedIndices: ");
+
+                    if (SelectedItemIndices.Count >= 1)
+                    {
+                        Console.Write("{0}", SelectedItemIndices[0]);
+                    }
+
+                    for (int i = 1; i < SelectedItemIndices.Count; i++)
+                    {
+                        Console.Write(", {0}", SelectedItemIndices[i]);
+                    }
+
+                    Console.WriteLine();
                     Console.WriteLine("-------------------------------------------------------------------------------");
 
                     e.Handled = true;
@@ -818,12 +835,15 @@ namespace InCoding.DList
         protected override void OnMouseClick(MouseEventArgs e)
         {
             // TODO: remove
-            //Console.WriteLine("Mouse CLICK - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
+            Console.WriteLine("Mouse CLICK - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
 
             Focus();
 
             if (e.Button == MouseButtons.Left)
             {
+                int OldFocusIndex = FocusedItemIndex;
+                int SelectedIndex = GetItemIndexAt(e.X, e.Y);
+
                 if (AllowMultipleSelectedItems)
                 {
                     // Select only the item under the cursor if there is no selection rectangle.
@@ -831,18 +851,46 @@ namespace InCoding.DList
                     {
                         if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
                         {
-                            SelectedItemIndices.Clear();
+                            if (!SelectedItemIndices.Contains(SelectedIndex))
+                            {
+                                SelectedItemIndices.Clear();
+
+                                if (SelectedIndex >= 0)
+                                {
+                                    SelectedItemIndices.Add(SelectedIndex);
+                                }
+                            }
+                        }
+                        else if (SelectedIndex >= 0 && !SelectedItemIndices.Contains(SelectedIndex))
+                        {
+                            SelectedItemIndices.Add(SelectedIndex);
                         }
 
-                        int SelectedIndex = GetItemIndexAt(e.X, e.Y);
-                        SelectedItemIndices.Add(SelectedIndex);
-                        FocusedItemIndex = SelectedItemIndex;
+                        FocusedItemIndex = SelectedIndex;
                     }
                 }
                 else
                 {
-                    SelectedItemIndex = GetItemIndexAt(e.X, e.Y);
-                    FocusedItemIndex = SelectedItemIndex;
+                    SelectedItemIndex = SelectedIndex;
+                    FocusedItemIndex = SelectedIndex;
+                }
+
+                // Begin cell editing if possible.
+                if (FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex))
+                {
+                    int ColumnIndex = GetColumnIndexAt(e.X);
+                    var Column = Columns[ColumnIndex];
+
+                    var Bounds = GetCellBounds(ColumnIndex, FocusedItemIndex);
+                    Console.WriteLine("CellBounds: {0}", Bounds);
+
+                    if (Column.CanEdit)
+                    {
+                        object Value = Column.GetValue(Items[FocusedItemIndex]);
+                        var Editor = Column.CellEditor;
+                        Editor.Done += CellEditorDone;
+                        Editor.BeginEdit(Bounds, ColumnIndex, FocusedItemIndex, Value);
+                    }
                 }
 
                 // TODO: remove
@@ -973,11 +1021,66 @@ namespace InCoding.DList
 
         protected void ColumnCollectionChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
+            switch (e.Action)
+            {
+                case NotifyingCollectionChangeAction.Add:
+                    var AddedColumn = (Column)e.NewItem;
+
+                    if (AddedColumn.CellEditor != null && AddedColumn.CellEditor.EditorControl != null)
+                    {
+                        Controls.Add(AddedColumn.CellEditor.EditorControl);
+                    }
+
+                    break;
+                case NotifyingCollectionChangeAction.Remove:
+                    var RemovedColumn = (Column)e.OldItem;
+
+                    if (RemovedColumn.CellEditor != null && RemovedColumn.CellEditor.EditorControl != null)
+                    {
+                        Controls.Remove(RemovedColumn.CellEditor.EditorControl);
+                    }
+
+                    break;
+                case NotifyingCollectionChangeAction.Replace:
+                    var OldColumn = (Column)e.OldItem;
+                    var NewColumn = (Column)e.NewItem;
+
+                    if (OldColumn.CellEditor != null && OldColumn.CellEditor.EditorControl != null)
+                    {
+                        Controls.Remove(OldColumn.CellEditor.EditorControl);
+                    }
+
+                    if (NewColumn.CellEditor != null && NewColumn.CellEditor.EditorControl != null)
+                    {
+                        Controls.Add(NewColumn.CellEditor.EditorControl);
+                    }
+
+                    break;
+                case NotifyingCollectionChangeAction.Clear:
+                    var ClearedCollection = (NotifyingCollection<Column>)sender;
+
+                    foreach (var column in ClearedCollection)
+                    {
+                        if (column.CellEditor != null && column.CellEditor.EditorControl != null)
+                        {
+                            Controls.Remove(column.CellEditor.EditorControl);
+                        }
+                    }
+
+                    break;
+            }
+
             Invalidate();
         }
 
         protected void ColumnChanged(object sender, ItemPropertyChangedEventArgs e)
         {
+            if (e.PropertyName == nameof(Column.CellEditor))
+            {
+                var Msg = "The {0} property of a column object may not be changed once it is added to a {1} instance.";
+                throw new InvalidOperationException(string.Format(Msg, nameof(Column.CellEditor), nameof(DList)));
+            }
+
             Invalidate();
         }
 
@@ -993,6 +1096,8 @@ namespace InCoding.DList
         protected void ScrollValueChanged(object sender, EventArgs e)
         {
             Invalidate();
+
+            // TODO: Cancel cell editing!
 
             // TODO: Remove
             ScrollBar SBar = (ScrollBar)sender;
@@ -1105,6 +1210,11 @@ namespace InCoding.DList
 
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
+            // FIXME: Totally broken when minimizing the form!!
+
+            // TODO: Remove
+            //Console.WriteLine("SetBoundsCoreStart: x{0}, y{1}, w{2}, h{3}", x, y, width, height);
+
             if (IntegralHeight)
             {
                 int ContentHeight = (HScroll.Visible) ? ContentRectangle.Height + HScroll.Height + 2 : ContentRectangle.Height;
@@ -1119,6 +1229,9 @@ namespace InCoding.DList
                 }
             }
 
+            // TODO: remove
+            //Console.WriteLine("SetBoundsCoreEnd: x{0}, y{1}, w{2}, h{3} - Crect: {4}", x, y, width, height, ContentRectangle);
+
             base.SetBoundsCore(x, y, width, height, specified);
         }
 
@@ -1130,6 +1243,22 @@ namespace InCoding.DList
             }
 
             base.OnLostFocus(e);
+        }
+
+        private void CellEditorDone(object sender, CellEditorDoneEventArgs e)
+        {
+            if (e.Success)
+            {
+                var Column = Columns[e.ColumnIndex];
+                var Item = Items[e.ItemIndex];
+                Column.SetValue(Item, e.NewValue);
+            }
+
+            var Editor = (ICellEditor)sender;
+            Editor.Done -= CellEditorDone;
+
+            // TODO: Remove
+            Console.WriteLine("EditDone - success: {0}, value: {1}", e.Success, e.NewValue);
         }
 
         #endregion
@@ -1188,6 +1317,47 @@ namespace InCoding.DList
             return -1;
         }
 
+        public int GetFirstVisibleItemIndex()
+        {
+            if (Items.Count == 0) return -1;
+
+            return (!VScroll.Visible) ? 0 : VScroll.Value / ItemHeight;
+        }
+
+        public int GetLastVisibleItemIndex()
+        {
+            if (Items.Count == 0) return -1;
+
+            return (!VScroll.Visible) ? Items.Count - 1 : (int)Math.Ceiling((VScroll.Value + VScroll.LargeChange) / (double)ItemHeight) - 1;
+        }
+
+        public Rectangle GetCellBounds(int columnIndex, int itemIndex)
+        {
+            if (columnIndex < 0) throw new ArgumentException("Index is less than zero.", nameof(columnIndex));
+            if (columnIndex > Columns.Count - 1) throw new ArgumentOutOfRangeException(nameof(columnIndex));
+            if (itemIndex < 0) throw new ArgumentException("Index is less than zero.", nameof(itemIndex));
+            if (itemIndex > Items.Count - 1) throw new ArgumentOutOfRangeException(nameof(itemIndex));
+
+            if (Items.Count <= 0) return Rectangle.Empty;
+
+            var Bounds = new Rectangle(ContentRectangle.X, ContentRectangle.Y + ItemHeight, Columns[columnIndex].Width, ItemHeight);
+
+            for (int i = 0; i < columnIndex; i++)
+            {
+                Bounds.X += Columns[i].Width;
+            }
+
+            for (int i = 0; i < itemIndex; i++)
+            {
+                Bounds.Y += ItemHeight;
+            }
+
+            Bounds.X -= HScroll.Value;
+            Bounds.Y -= VScroll.Value;
+
+            return Bounds;
+        }
+
         public void EnsureItemVisibility(int itemIndex)
         {
             if (Items.Count == 0 || itemIndex < 0) return;
@@ -1229,13 +1399,7 @@ namespace InCoding.DList
 
         private void StartSelectionRectangle(int x, int y)
         {
-            HotItemIndex = -1;
-
-            if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
-            {
-                SelectedItemIndices.Clear();
-            }
-            else
+            if (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control))
             {
                 AddToSelection = true;
             }
@@ -1289,6 +1453,8 @@ namespace InCoding.DList
                 && !ItemSelectionEnd.IsEmpty)
             {
                 // Finish selection rectangle handling
+
+                if (!AddToSelection) SelectedItemIndices.Clear();
 
                 // TODO: Remove
                 //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);

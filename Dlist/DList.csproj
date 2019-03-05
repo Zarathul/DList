@@ -45,6 +45,11 @@
     <Compile Include="DList.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Editing\BooleanCellEditor.cs" />
+    <Compile Include="Editing\CellEditorBase.cs" />
+    <Compile Include="Editing\CellEditorDoneEventArgs.cs" />
+    <Compile Include="Editing\ICellEditor.cs" />
+    <Compile Include="Editing\TextCellEditor.cs" />
     <Compile Include="Rendering\CheckBoxCellRenderer.cs" />
     <Compile Include="Rendering\HeaderRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
