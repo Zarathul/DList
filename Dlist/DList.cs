@@ -877,7 +877,8 @@ namespace InCoding.DList
                 }
 
                 // Begin cell editing if possible.
-                if (ItemSelectionEnd.IsEmpty && FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex))
+                if (ItemSelectionEnd.IsEmpty && FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex)
+                    && !ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
                 {
                     int ColumnIndex = GetColumnIndexAt(e.X);
                     BeginCellEdit(ColumnIndex, FocusedItemIndex);
