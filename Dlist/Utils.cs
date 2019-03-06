@@ -7,6 +7,8 @@ namespace InCoding.DList
 {
     public static class Utils
     {
+        #region Extensions
+
         public static int Clamp(this int value, int min, int max)
         {
             return (value < min) ? min : (value > max) ? max : value;
@@ -16,6 +18,13 @@ namespace InCoding.DList
         {
             return new Rectangle(source.X, source.Y, source.Width - 1, source.Height - 1);
         }
+
+        public static Size Distance(this Point from, int toX, int toY)
+        {
+            return new Size(Math.Abs(from.X - toX), Math.Abs(from.Y - toY));
+        }
+
+        #endregion
 
         public static Rectangle GetRectangleFromPoints(Point p0, Point p1)
         {

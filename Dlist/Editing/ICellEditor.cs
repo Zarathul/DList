@@ -9,7 +9,7 @@ namespace InCoding.DList.Editing
         Control EditorControl { get; }
         event EventHandler<CellEditorDoneEventArgs> Done;
 
-        void BeginEdit(Rectangle cellBounds, int columnIndex, int itemIndex, object value);
+        void Edit(Rectangle cellBounds, int columnIndex, int itemIndex, object value);
         void Cancel();
     }
 }

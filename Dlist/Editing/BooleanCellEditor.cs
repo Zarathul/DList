@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-
+﻿
 namespace InCoding.DList.Editing
 {
     public class BooleanCellEditor : CellEditorBase
@@ -8,15 +7,14 @@ namespace InCoding.DList.Editing
         {
         }
 
-        public override void BeginEdit(Rectangle cellBounds, int columnIndex, int itemIndex, object value)
+        protected override void EditInternal(int columnIndex, int itemIndex, object value)
         {
-            bool NewValue = !((bool)value);
-            var Args = new CellEditorDoneEventArgs(true, columnIndex, itemIndex, NewValue);
-            OnDone(Args);
+            EditDone();
         }
 
-        public override void Cancel()
+        protected override object GetResultValue()
         {
+            return !((bool)Value);
         }
     }
 }

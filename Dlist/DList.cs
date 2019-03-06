@@ -43,6 +43,9 @@ namespace InCoding.DList
         private int _PressedColumnIndex = -1;
         private Point _ItemSelectionEnd = Point.Empty;
 
+        private bool _AddToSelection = false;
+        private ICellEditor _ActiveCellEditor;
+
         [DefaultValue(true)]
         [Category("Appearance")]
         public bool ShowGrid
@@ -296,8 +299,6 @@ namespace InCoding.DList
                 Invalidate();
             }
         }
-
-        private bool AddToSelection = false;
 
         protected override Size DefaultMinimumSize => new Size(4 * ItemHeight, ItemHeight * 2);
 
@@ -803,6 +804,8 @@ namespace InCoding.DList
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
+            Focus();
+
             if (HotColumnIndex >= 0 && Cursor.Current != Cursors.VSplit)
             {
                 PressedColumnIndex = HotColumnIndex;
@@ -837,8 +840,6 @@ namespace InCoding.DList
             // TODO: remove
             Console.WriteLine("Mouse CLICK - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
 
-            Focus();
-
             if (e.Button == MouseButtons.Left)
             {
                 int OldFocusIndex = FocusedItemIndex;
@@ -849,21 +850,21 @@ namespace InCoding.DList
                     // Select only the item under the cursor if there is no selection rectangle.
                     if (ItemSelectionEnd.IsEmpty)
                     {
-                        if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
+                        if (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control))
                         {
-                            if (!SelectedItemIndices.Contains(SelectedIndex))
+                            if (SelectedIndex >= 0 && !SelectedItemIndices.Contains(SelectedIndex))
                             {
-                                SelectedItemIndices.Clear();
-
-                                if (SelectedIndex >= 0)
-                                {
-                                    SelectedItemIndices.Add(SelectedIndex);
-                                }
+                                SelectedItemIndices.Add(SelectedIndex);
                             }
                         }
-                        else if (SelectedIndex >= 0 && !SelectedItemIndices.Contains(SelectedIndex))
+                        else// if (!SelectedItemIndices.Contains(SelectedIndex))
                         {
-                            SelectedItemIndices.Add(SelectedIndex);
+                            SelectedItemIndices.Clear();
+
+                            if (SelectedIndex >= 0)
+                            {
+                                SelectedItemIndices.Add(SelectedIndex);
+                            }
                         }
 
                         FocusedItemIndex = SelectedIndex;
@@ -876,21 +877,10 @@ namespace InCoding.DList
                 }
 
                 // Begin cell editing if possible.
-                if (FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex))
+                if (ItemSelectionEnd.IsEmpty && FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex))
                 {
                     int ColumnIndex = GetColumnIndexAt(e.X);
-                    var Column = Columns[ColumnIndex];
-
-                    var Bounds = GetCellBounds(ColumnIndex, FocusedItemIndex);
-                    Console.WriteLine("CellBounds: {0}", Bounds);
-
-                    if (Column.CanEdit)
-                    {
-                        object Value = Column.GetValue(Items[FocusedItemIndex]);
-                        var Editor = Column.CellEditor;
-                        Editor.Done += CellEditorDone;
-                        Editor.BeginEdit(Bounds, ColumnIndex, FocusedItemIndex, Value);
-                    }
+                    BeginCellEdit(ColumnIndex, FocusedItemIndex);
                 }
 
                 // TODO: remove
@@ -973,6 +963,14 @@ namespace InCoding.DList
                 {
                     if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
                     {
+                        var SelectionSize = ItemSelectionStart.Distance(e.X + ContentRectangle.X + HScroll.Value, e.Y + ContentRectangle.Y + VScroll.Value);
+
+                        if (SelectionSize.Width >= SystemInformation.DragSize.Width && SelectionSize.Height >= SystemInformation.DragSize.Height)
+                        {
+                            if (SelectedItemIndices.Count > 0) SelectedItemIndices.Clear();
+                            if (HotItemIndex >= 0) HotItemIndex = -1;
+                        }
+
                         UpdateSelectionRectangle(e.X, e.Y);
                     }
                 }
@@ -1012,6 +1010,7 @@ namespace InCoding.DList
         protected void ItemCollectionChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
             Invalidate();
+            CancelCellEdit();
         }
 
         protected void ItemChanged(object sender, ItemPropertyChangedEventArgs e)
@@ -1021,6 +1020,7 @@ namespace InCoding.DList
 
         protected void ColumnCollectionChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
+            // TODO: Test if this stuff actually works.
             switch (e.Action)
             {
                 case NotifyingCollectionChangeAction.Add:
@@ -1071,6 +1071,7 @@ namespace InCoding.DList
             }
 
             Invalidate();
+            CancelCellEdit();
         }
 
         protected void ColumnChanged(object sender, ItemPropertyChangedEventArgs e)
@@ -1096,12 +1097,11 @@ namespace InCoding.DList
         protected void ScrollValueChanged(object sender, EventArgs e)
         {
             Invalidate();
-
-            // TODO: Cancel cell editing!
+            CancelCellEdit();
 
             // TODO: Remove
-            ScrollBar SBar = (ScrollBar)sender;
-            Console.WriteLine("{0}, LC: {1}", SBar, SBar.LargeChange);
+            //ScrollBar SBar = (ScrollBar)sender;
+            //Console.WriteLine("{0}, LC: {1}", SBar, SBar.LargeChange);
         }
 
         protected void UpdateScrollBars()
@@ -1257,6 +1257,8 @@ namespace InCoding.DList
             var Editor = (ICellEditor)sender;
             Editor.Done -= CellEditorDone;
 
+            Focus();
+
             // TODO: Remove
             Console.WriteLine("EditDone - success: {0}, value: {1}", e.Success, e.NewValue);
         }
@@ -1397,11 +1399,44 @@ namespace InCoding.DList
             }
         }
 
+        public void BeginCellEdit(int columnIndex, int itemIndex)
+        {
+            if (Columns.Count == 0) throw new InvalidOperationException(string.Format("{0} has no columns.", nameof(DList)));
+            if (Items.Count == 0) throw new InvalidOperationException(string.Format("{0} has no items.", nameof(DList)));
+            if (columnIndex < 0 || columnIndex >= Columns.Count) throw new ArgumentOutOfRangeException(nameof(columnIndex));
+            if (itemIndex < 0 || itemIndex >= Items.Count) throw new ArgumentOutOfRangeException(nameof(itemIndex));
+
+            var Column = Columns[columnIndex];
+
+            if (Column.CanEdit)
+            {
+                object Value = Column.GetValue(Items[FocusedItemIndex]);
+                var Editor = Column.CellEditor;
+                Editor.Done += CellEditorDone;
+
+                var CellBounds = GetCellBounds(columnIndex, FocusedItemIndex);
+                Editor.Edit(CellBounds, columnIndex, FocusedItemIndex, Value);
+
+                _ActiveCellEditor = Column.CellEditor;
+
+                // TODO: Remove
+                Console.WriteLine("CellBounds: {0}", CellBounds);
+            }
+        }
+
+        public void CancelCellEdit()
+        {
+            if (_ActiveCellEditor != null)
+            {
+                _ActiveCellEditor.Cancel();
+            }
+        }
+
         private void StartSelectionRectangle(int x, int y)
         {
             if (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control))
             {
-                AddToSelection = true;
+                _AddToSelection = true;
             }
 
             ItemSelectionStart = new Point(x + ContentRectangle.X + HScroll.Value, y + ContentRectangle.Y + VScroll.Value);
@@ -1454,7 +1489,7 @@ namespace InCoding.DList
             {
                 // Finish selection rectangle handling
 
-                if (!AddToSelection) SelectedItemIndices.Clear();
+                if (!_AddToSelection) SelectedItemIndices.Clear();
 
                 // TODO: Remove
                 //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
@@ -1490,7 +1525,7 @@ namespace InCoding.DList
 
                     for (int i = FirstItemIndex; i <= LastItemIndex; i++)
                     {
-                        if (AddToSelection)
+                        if (_AddToSelection)
                         {
                             if (!SelectedItemIndices.Contains(i))
                             {
@@ -1514,7 +1549,7 @@ namespace InCoding.DList
             // Clean up selection rectangle data
             ItemSelectionStart = Point.Empty;
             ItemSelectionEnd = Point.Empty;
-            AddToSelection = false;
+            _AddToSelection = false;
         }
     }
 }

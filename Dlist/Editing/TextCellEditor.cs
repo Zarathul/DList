@@ -1,69 +1,49 @@
-﻿using System;
-using System.Drawing;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace InCoding.DList.Editing
 {
     public class TextCellEditor : CellEditorBase
     {
-        public TextCellEditor() : base(new TextBox())
+        private TextBox TBox { get; }
+
+        public TextCellEditor(HorizontalAlignment textAlignment = HorizontalAlignment.Center) : base(new TextBox())
         {
-            EditorControl.KeyDown += EditorControlKeyDown;
+            TBox = (TextBox)EditorControl;
+            TBox.TextAlign = textAlignment;
+            TBox.KeyPress += EditorControlKeyPress;
         }
 
-        public override void BeginEdit(Rectangle cellBounds, int columnIndex, int itemIndex, object value)
+        protected override void EditInternal(int columnIndex, int itemIndex, object value)
         {
-            ColumnIndex = columnIndex;
-            ItemIndex = itemIndex;
-
-            int ControlY = cellBounds.Y + (cellBounds.Height - EditorControl.Height) / 2;
-            EditorControl.SetBounds(cellBounds.X + 1, ControlY, cellBounds.Width - 2, cellBounds.Height - 2);
-            EditorControl.Text = value.ToString();
-            EditorControl.Visible = true;
-            EditorControl.BringToFront();
-            EditorControl.Focus();
-            EditorControl.LostFocus += EditorControlLostFocus;
+            TBox.Text = value.ToString();
+            TBox.SelectAll();
         }
 
-        public override void Cancel()
+        protected override object GetResultValue()
         {
-            EditorControl.LostFocus -= EditorControlLostFocus;
-            EditorControl.Visible = false;
-            EditorControl.SendToBack();
-
-            var Args = new CellEditorDoneEventArgs(false, ColumnIndex, ItemIndex, "");
-            OnDone(Args);
-
-            EditorControl.Text = "";
+            return TBox.Text;
         }
 
-        private void EditorControlLostFocus(object sender, EventArgs e)
+        protected override void OnDone(CellEditorDoneEventArgs args)
         {
-            Cancel();
+            base.OnDone(args);
+            TBox.Text = "";
         }
 
-        private void EditDone()
+        private void EditorControlKeyPress(object sender, KeyPressEventArgs e)
         {
-            EditorControl.LostFocus -= EditorControlLostFocus;
-            EditorControl.Visible = false;
-            EditorControl.SendToBack();
-
-            var Args = new CellEditorDoneEventArgs(true, ColumnIndex, ItemIndex, EditorControl.Text);
-            OnDone(Args);
-
-            EditorControl.Text = "";
-        }
-
-        private void EditorControlKeyDown(object sender, KeyEventArgs e)
-        {
-            switch (e.KeyCode)
+            // This has to be handled in the KeyPress event, otherwise you'll 
+            // get a Windows 'Ding' sound everytime enter or escape is pressed.
+            switch (e.KeyChar)
             {
-                case Keys.Enter:
+                case (char)Keys.Enter:
                     EditDone();
-
+                    e.Handled = true;
                     break;
-                case Keys.Escape:
+
+                case (char)Keys.Escape:
                     Cancel();
+                    e.Handled = true;
                     break;
             }
         }
