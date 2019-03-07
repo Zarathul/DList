@@ -44,6 +44,7 @@ namespace InCoding.DList
         private Point _ItemSelectionEnd = Point.Empty;
 
         private bool _AddToSelection = false;
+        private bool _FirstPaint = true;
         private ICellEditor _ActiveCellEditor;
 
         [DefaultValue(true)]
@@ -344,9 +345,14 @@ namespace InCoding.DList
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            if (Width == 0 || Height == 0)
+            {
+                base.OnPaint(e);
+                return;
+            }
+
             var Gfx = e.Graphics;
             ContentRectangle = DrawBackground(Gfx);
-            Gfx.SetClip(ContentRectangle);
 
             UpdateScrollBars();
             Gfx.SetClip(ContentRectangle);
@@ -367,6 +373,16 @@ namespace InCoding.DList
             }
 
             base.OnPaint(e);
+
+            // This is necessary in integral height mode. Because the ContentRectangle is constructed here in 
+            // OnPaint() and when SetBoundsCore() is called the first few times, OnPaint() has not been called yet. 
+            // Therefore, the height calculation in SetBoundsCore() will fail. Just calling SetBoundsCore() once
+            // after the ContentRectangle has been created will fix this.
+            if (_FirstPaint)
+            {
+                _FirstPaint = false;
+                SetBoundsCore(Left, Top, Width, Height, BoundsSpecified.All);
+            }
         }
 
         protected Rectangle DrawBackground(Graphics gfx)
@@ -857,7 +873,7 @@ namespace InCoding.DList
                                 SelectedItemIndices.Add(SelectedIndex);
                             }
                         }
-                        else// if (!SelectedItemIndices.Contains(SelectedIndex))
+                        else
                         {
                             SelectedItemIndices.Clear();
 
@@ -1107,7 +1123,7 @@ namespace InCoding.DList
 
         protected void UpdateScrollBars()
         {
-            if (Columns.Count == 0) return;
+            if (Columns.Count == 0) return; // This might be bad, but without it the VS form designer goes crazy.
 
             // Vertical
             int TotalContentHeight = (Items.Count + 1) * ItemHeight;
@@ -1211,12 +1227,13 @@ namespace InCoding.DList
 
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
-            // FIXME: Totally broken when minimizing the form!!
-
             // TODO: Remove
             //Console.WriteLine("SetBoundsCoreStart: x{0}, y{1}, w{2}, h{3}", x, y, width, height);
 
-            if (IntegralHeight)
+            // This prevents the control from being resized when minimized, which would mess up the integral height calculation.
+            if (specified == BoundsSpecified.None && height == 0 && width == 0) return;
+
+            if (IntegralHeight && height > MinimumSize.Height)
             {
                 int ContentHeight = (HScroll.Visible) ? ContentRectangle.Height + HScroll.Height + 2 : ContentRectangle.Height;
                 // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
