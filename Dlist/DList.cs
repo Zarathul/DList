@@ -28,12 +28,6 @@ namespace InCoding.DList
     public class DList : Control
     {
         private bool _ShowGrid = true;
-        private Color _SelectedItemColor = SystemColors.Highlight;
-        private Color _HotItemColor = SystemColors.HotTrack;
-        private Color _GridColor = Color.Black;
-        private Color _HighlightTextColor = SystemColors.HighlightText;
-        private Color _SelectionRectangleColor = SystemColors.HotTrack;
-        private Color _SelectionRectangleBorderColor = Color.Black;
         private int _ItemHeight = 28;
         private int _ResizeGripWidth = 10;
         private int _FocusedItemIndex = -1;
@@ -41,10 +35,18 @@ namespace InCoding.DList
         private int _HotItemIndex = -1;
         private int _HotColumnIndex = -1;
         private int _PressedColumnIndex = -1;
-        private Point _ItemSelectionEnd = Point.Empty;
+        private Color _SelectedItemColor = SystemColors.Highlight;
+        private Color _HotItemColor = SystemColors.HotTrack;
+        private Color _GridColor = Color.Black;
+        private Color _HighlightTextColor = SystemColors.HighlightText;
+        private Color _SelectionRectangleColor = SystemColors.HotTrack;
+        private Color _SelectionRectangleBorderColor = Color.Black;
+        private Rectangle _ContentRectangle;
 
         private bool _AddToSelection = false;
         private bool _FirstPaint = true;
+        private Point _ItemSelectionStart = Point.Empty;
+        private Point _ItemSelectionEnd = Point.Empty;
         private ICellEditor _ActiveCellEditor;
 
         [DefaultValue(true)]
@@ -195,7 +197,10 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public Rectangle ContentRectangle { get; private set; }
+        public Rectangle ContentRectangle
+        {
+            get => _ContentRectangle;
+        }
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -290,18 +295,8 @@ namespace InCoding.DList
         protected VisualStyleRenderer VsRenderer { get; private set; }
         protected HScrollBar HScroll { get; }
         protected VScrollBar VScroll { get; }
-        protected Point ItemSelectionStart { get; private set; } = Point.Empty;
-        protected Point ItemSelectionEnd
-        {
-            get => _ItemSelectionEnd;
-            private set
-            {
-                _ItemSelectionEnd = value;
-                Invalidate();
-            }
-        }
 
-        protected override Size DefaultMinimumSize => new Size(4 * ItemHeight, ItemHeight * 2);
+        protected override Size DefaultMinimumSize => new Size(4 * ItemHeight, 2 * ItemHeight);
 
         public DList()
         {
@@ -352,10 +347,10 @@ namespace InCoding.DList
             }
 
             var Gfx = e.Graphics;
-            ContentRectangle = DrawBackground(Gfx);
+            _ContentRectangle = DrawBackground(Gfx);
 
             UpdateScrollBars();
-            Gfx.SetClip(ContentRectangle);
+            Gfx.SetClip(_ContentRectangle);
 
             if (Items.Count > 0)
             {
@@ -363,7 +358,7 @@ namespace InCoding.DList
                 DrawItems(Gfx, FirstVisibleItemIndex);
 
                 if (FocusedItemIndex >= 0) DrawFocusRectangle(Gfx);
-                if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx);
+                if (!_ItemSelectionStart.IsEmpty && !_ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx, _ItemSelectionStart, _ItemSelectionEnd);
             }
 
             if (Columns.Count > 0)
@@ -403,13 +398,13 @@ namespace InCoding.DList
 
         protected void DrawHeaders(Graphics gfx)
         {
-            var Bounds = new Rectangle(ContentRectangle.Left - HScroll.Value, ContentRectangle.Top, 0, ItemHeight);
+            var Bounds = new Rectangle(_ContentRectangle.Left - HScroll.Value, _ContentRectangle.Top, 0, ItemHeight);
             int Index = 0;
             RenderState State;
 
             foreach (var column in Columns)
             {
-                if (Bounds.X >= ContentRectangle.Right) break;
+                if (Bounds.X >= _ContentRectangle.Right) break;
                 Bounds.Width = column.Width;
                 State = (Index == HotColumnIndex) ? RenderState.Hot : (Index == PressedColumnIndex) ? RenderState.Pressed : RenderState.Normal;
                 HeaderRenderer.Draw(gfx, Bounds, State, column.Name, ForeColor, BackColor, Font);
@@ -420,18 +415,18 @@ namespace InCoding.DList
 
         protected void DrawItems(Graphics gfx, int firstItemIndex)
         {
-            var Bounds = new Rectangle(ContentRectangle.Left - HScroll.Value, ContentRectangle.Top + ItemHeight, 0, ItemHeight);
+            var Bounds = new Rectangle(_ContentRectangle.Left - HScroll.Value, _ContentRectangle.Top + ItemHeight, 0, ItemHeight);
 
             foreach (var column in Columns)
             {
-                if (Bounds.X > ContentRectangle.Right) break;
+                if (Bounds.X > _ContentRectangle.Right) break;
 
                 Bounds.Width = column.Width;
                 Bounds.Y -= (VScroll.Value - firstItemIndex * ItemHeight);
 
                 for (int x = firstItemIndex; x < Items.Count; x++)
                 {
-                    if (Bounds.Y > ContentRectangle.Bottom) break;
+                    if (Bounds.Y > _ContentRectangle.Bottom) break;
 
                     var Item = Items[x];
                     var CellValue = column.GetValue(Item);
@@ -455,16 +450,16 @@ namespace InCoding.DList
                 }
 
                 Bounds.X += column.Width;
-                Bounds.Y = ContentRectangle.Top + ItemHeight;
+                Bounds.Y = _ContentRectangle.Top + ItemHeight;
             }
         }
 
         protected void DrawGrid(Graphics gfx)
         {
             Color Color = (SetVisualStyleRendererElement(VisualStyleElement.Header.Item.Normal)) ? VsRenderer.GetColor(ColorProperty.EdgeFillColor) : GridColor;
-            var X = ContentRectangle.X - 1 - HScroll.Value;
-            var Y1 = ContentRectangle.Y + ItemHeight;
-            var Y2 = Math.Min(ContentRectangle.Bottom - 1, Y1 + Items.Count * ItemHeight - 1);
+            var X = _ContentRectangle.X - 1 - HScroll.Value;
+            var Y1 = _ContentRectangle.Y + ItemHeight;
+            var Y2 = Math.Min(_ContentRectangle.Bottom - 1, Y1 + Items.Count * ItemHeight - 1);
 
             using (var gridPen = new Pen(Color))
             {
@@ -479,9 +474,9 @@ namespace InCoding.DList
                 }
 
                 // Horizontal grid lines.
-                var X1 = ContentRectangle.X;
+                var X1 = _ContentRectangle.X;
                 var X2 = X1 + TotalColumnWidth - 1;
-                var Y = ContentRectangle.Top + ItemHeight - 1;
+                var Y = _ContentRectangle.Top + ItemHeight - 1;
 
                 // Headers
                 gfx.DrawLine(gridPen, X1, Y, X2, Y);
@@ -490,7 +485,7 @@ namespace InCoding.DList
                 // Items
                 foreach (var item in Items)
                 {
-                    if ((Y >= ContentRectangle.Y + ItemHeight) && (Y < ContentRectangle.Bottom))
+                    if ((Y >= _ContentRectangle.Y + ItemHeight) && (Y < _ContentRectangle.Bottom))
                     {
                         gfx.DrawLine(gridPen, X1, Y, X2, Y);
                     }
@@ -502,7 +497,7 @@ namespace InCoding.DList
 
         protected void DrawFocusRectangle(Graphics gfx)
         {
-            var ItemPos = new Point(ContentRectangle.X, ContentRectangle.Y - VScroll.Value + (FocusedItemIndex + 1) * ItemHeight);
+            var ItemPos = new Point(_ContentRectangle.X, _ContentRectangle.Y - VScroll.Value + (FocusedItemIndex + 1) * ItemHeight);
             var ItemSize= new Size(0, ItemHeight);
 
             foreach (var column in Columns)
@@ -522,9 +517,9 @@ namespace InCoding.DList
             ControlPaint.DrawFocusRectangle(gfx, Bounds);
         }
 
-        protected void DrawSelectionRectangle(Graphics gfx)
+        protected void DrawSelectionRectangle(Graphics gfx, Point start, Point end)
         {
-            var SelectionRectangle = Utils.GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd).ToGDI();
+            var SelectionRectangle = Utils.GetRectangleFromPoints(start, end).ToGDI();
             SelectionRectangle.Offset(-HScroll.Value, -VScroll.Value);
 
             // TODO: remove
@@ -653,12 +648,12 @@ namespace InCoding.DList
                         TotalColumnWidth += column.Width;
                     }
 
-                    var HeadersArea = new Rectangle(ContentRectangle.X, ContentRectangle.Y, TotalColumnWidth, ItemHeight);
-                    var ItemArea = new Rectangle(ContentRectangle.X, HeadersArea.Bottom, TotalColumnWidth, Items.Count * ItemHeight);
+                    var HeadersArea = new Rectangle(_ContentRectangle.X, _ContentRectangle.Y, TotalColumnWidth, ItemHeight);
+                    var ItemArea = new Rectangle(_ContentRectangle.X, HeadersArea.Bottom, TotalColumnWidth, Items.Count * ItemHeight);
                     Console.WriteLine("-------------------------------------------------------------------------------");
                     Console.WriteLine("| Right and bottom are the actual coordinates not the rectangle values.       |");
                     Console.WriteLine("-------------------------------------------------------------------------------");
-                    Console.WriteLine("|               Content: {0} -> Right:{1}, Bottom:{2}", ContentRectangle, ContentRectangle.Right - 1, ContentRectangle.Bottom - 1);
+                    Console.WriteLine("|               Content: {0} -> Right:{1}, Bottom:{2}", _ContentRectangle, _ContentRectangle.Right - 1, _ContentRectangle.Bottom - 1);
                     Console.WriteLine("|               Headers: {0} -> Right:{1}, Bottom:{2}", HeadersArea, HeadersArea.Right - 1, HeadersArea.Bottom - 1);
                     Console.WriteLine("|                 Items: {0} -> Right:{1}, Bottom:{2}", ItemArea, ItemArea.Right - 1, ItemArea.Bottom - 1);
                     Console.WriteLine("|     SelectedItemCount: {0}", SelectedItemIndices.Count);
@@ -864,7 +859,7 @@ namespace InCoding.DList
                 if (AllowMultipleSelectedItems)
                 {
                     // Select only the item under the cursor if there is no selection rectangle.
-                    if (ItemSelectionEnd.IsEmpty)
+                    if (_ItemSelectionEnd.IsEmpty)
                     {
                         if (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control))
                         {
@@ -893,7 +888,7 @@ namespace InCoding.DList
                 }
 
                 // Begin cell editing if possible.
-                if (ItemSelectionEnd.IsEmpty && FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex)
+                if (_ItemSelectionEnd.IsEmpty && FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex)
                     && !ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
                 {
                     int ColumnIndex = GetColumnIndexAt(e.X);
@@ -919,7 +914,7 @@ namespace InCoding.DList
                     // Change the mouse cursor if columns can be resized an the cursor inside the grip range.
                     if (HotColumnIndex >= 0)
                     {
-                        int RightColumnEdge = ContentRectangle.X;
+                        int RightColumnEdge = _ContentRectangle.X;
 
                         for (int i = 0; i <= HotColumnIndex; i++)
                         {
@@ -956,7 +951,7 @@ namespace InCoding.DList
                 // Resize the hot column.
                 if (Cursor == Cursors.VSplit)
                 {
-                    int RightColumnEdge = ContentRectangle.X;
+                    int RightColumnEdge = _ContentRectangle.X;
 
                     for (int i = 0; i <= HotColumnIndex; i++)
                     {
@@ -978,9 +973,9 @@ namespace InCoding.DList
                 }
                 else
                 {
-                    if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
+                    if (AllowMultipleSelectedItems && !_ItemSelectionStart.IsEmpty)
                     {
-                        var SelectionSize = ItemSelectionStart.Distance(e.X + ContentRectangle.X + HScroll.Value, e.Y + ContentRectangle.Y + VScroll.Value);
+                        var SelectionSize = _ItemSelectionStart.Distance(e.X + _ContentRectangle.X + HScroll.Value, e.Y + _ContentRectangle.Y + VScroll.Value);
 
                         if (SelectionSize.Width >= SystemInformation.DragSize.Width && SelectionSize.Height >= SystemInformation.DragSize.Height)
                         {
@@ -1127,12 +1122,12 @@ namespace InCoding.DList
 
             // Vertical
             int TotalContentHeight = (Items.Count + 1) * ItemHeight;
-            int ContentHeight = (!HScroll.Visible) ? ContentRectangle.Height : ContentRectangle.Height - (HScroll.Height + 2);
+            int ContentHeight = (!HScroll.Visible) ? _ContentRectangle.Height : _ContentRectangle.Height - (HScroll.Height + 2);
 
             if (TotalContentHeight > ContentHeight)
             {
-                VScroll.Left = ContentRectangle.Right - 1 - VScroll.Width;
-                VScroll.Top = ContentRectangle.Top + 1;
+                VScroll.Left = _ContentRectangle.Right - 1 - VScroll.Width;
+                VScroll.Top = _ContentRectangle.Top + 1;
                 VScroll.Minimum = 0;
                 VScroll.SmallChange = ItemHeight;
 
@@ -1144,9 +1139,7 @@ namespace InCoding.DList
                 VScroll.Visible = true;
                 VScroll.Update();
 
-                var NewContentRectangle = ContentRectangle;
-                NewContentRectangle.Width -= (VScroll.Width + 2);
-                ContentRectangle = NewContentRectangle;
+                _ContentRectangle.Width -= (VScroll.Width + 2);
             }
             else
             {
@@ -1164,10 +1157,10 @@ namespace InCoding.DList
                 TotalContentWidth += column.Width;
             }
 
-            if (TotalContentWidth > ContentRectangle.Width)
+            if (TotalContentWidth > _ContentRectangle.Width)
             {
-                HScroll.Left = ContentRectangle.Left + 1;
-                HScroll.Top = ContentRectangle.Bottom - 1 - HScroll.Height;
+                HScroll.Left = _ContentRectangle.Left + 1;
+                HScroll.Top = _ContentRectangle.Bottom - 1 - HScroll.Height;
                 HScroll.Minimum = 0;
 
                 if (HScroll.Value + HScroll.LargeChange - 1 > HScroll.Maximum)
@@ -1178,9 +1171,7 @@ namespace InCoding.DList
                 HScroll.Visible = true;
                 HScroll.Update();
 
-                var NewContentRectangle = ContentRectangle;
-                NewContentRectangle.Height -= (HScroll.Height + 2);
-                ContentRectangle = NewContentRectangle;
+                _ContentRectangle.Height -= (HScroll.Height + 2);
             }
             else
             {
@@ -1191,13 +1182,13 @@ namespace InCoding.DList
             }
 
             // Set values that are dependent on scroll bar visibility.
-            VScroll.Height = ContentRectangle.Height - 2;
+            VScroll.Height = _ContentRectangle.Height - 2;
             VScroll.Maximum = TotalContentHeight - ItemHeight - 1;
-            VScroll.LargeChange = Math.Max(0, ContentRectangle.Height - ItemHeight);
+            VScroll.LargeChange = Math.Max(0, _ContentRectangle.Height - ItemHeight);
 
-            HScroll.Width = ContentRectangle.Width - 2;
+            HScroll.Width = _ContentRectangle.Width - 2;
             HScroll.Maximum = TotalContentWidth - 1;
-            HScroll.LargeChange = Math.Max(0, ContentRectangle.Width);
+            HScroll.LargeChange = Math.Max(0, _ContentRectangle.Width);
             HScroll.SmallChange = HScroll.LargeChange / 10;
         }
         
@@ -1235,9 +1226,9 @@ namespace InCoding.DList
 
             if (IntegralHeight && height > MinimumSize.Height)
             {
-                int ContentHeight = (HScroll.Visible) ? ContentRectangle.Height + HScroll.Height + 2 : ContentRectangle.Height;
+                int ContentHeight = (HScroll.Visible) ? _ContentRectangle.Height + HScroll.Height + 2 : _ContentRectangle.Height;
                 // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
-                int BorderHeight = (ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight : 0;
+                int BorderHeight = (_ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight : 0;
 
                 height = (ItemHeight * (int)Math.Round(height / (double)ItemHeight)) + BorderHeight;
 
@@ -1285,12 +1276,12 @@ namespace InCoding.DList
 
         public int GetItemIndexAt(int x, int y)
         {
-            if (x < ContentRectangle.X || x >= ContentRectangle.Right) return -1;
-            if (y < ContentRectangle.Y + ItemHeight || y >= ContentRectangle.Bottom) return -1;
+            if (x < _ContentRectangle.X || x >= _ContentRectangle.Right) return -1;
+            if (y < _ContentRectangle.Y + ItemHeight || y >= _ContentRectangle.Bottom) return -1;
             if (Items.Count <= 0) return -1;
             if (Columns.Count <= 0) return -1;
 
-            int LastColumnRight = ContentRectangle.X;
+            int LastColumnRight = _ContentRectangle.X;
 
             foreach (var column in Columns)
             {
@@ -1299,7 +1290,7 @@ namespace InCoding.DList
 
             if (x >= LastColumnRight) return -1;
 
-            int ItemIndex = (int)Math.Floor((y - ContentRectangle.Y + VScroll.Value - ItemHeight) / (double)ItemHeight);
+            int ItemIndex = (int)Math.Floor((y - _ContentRectangle.Y + VScroll.Value - ItemHeight) / (double)ItemHeight);
 
             if (ItemIndex >= Items.Count)
             {
@@ -1313,16 +1304,16 @@ namespace InCoding.DList
 
         public int GetColumnIndexAt(int x)
         {
-            return GetColumnHeaderIndexAt(x, ContentRectangle.Y);
+            return GetColumnHeaderIndexAt(x, _ContentRectangle.Y);
         }
 
         public int GetColumnHeaderIndexAt(int x, int y)
         {
-            if (x < ContentRectangle.X || x >= ContentRectangle.Right) return -1;
-            if ((y < ContentRectangle.Y) || (y >= ContentRectangle.Y + ItemHeight)) return -1;
+            if (x < _ContentRectangle.X || x >= _ContentRectangle.Right) return -1;
+            if ((y < _ContentRectangle.Y) || (y >= _ContentRectangle.Y + ItemHeight)) return -1;
 
             int ScrolledX = x + HScroll.Value;
-            int Right = ContentRectangle.X;
+            int Right = _ContentRectangle.X;
             int Index = 0;
 
             foreach (var column in Columns)
@@ -1360,7 +1351,7 @@ namespace InCoding.DList
 
             if (Items.Count <= 0) return Rectangle.Empty;
 
-            var Bounds = new Rectangle(ContentRectangle.X, ContentRectangle.Y + ItemHeight, Columns[columnIndex].Width, ItemHeight);
+            var Bounds = new Rectangle(_ContentRectangle.X, _ContentRectangle.Y + ItemHeight, Columns[columnIndex].Width, ItemHeight);
 
             for (int i = 0; i < columnIndex; i++)
             {
@@ -1457,7 +1448,8 @@ namespace InCoding.DList
                 _AddToSelection = true;
             }
 
-            ItemSelectionStart = new Point(x + ContentRectangle.X + HScroll.Value, y + ContentRectangle.Y + VScroll.Value);
+            _ItemSelectionStart.X = x + _ContentRectangle.X + HScroll.Value;
+            _ItemSelectionStart.Y = y + _ContentRectangle.Y + VScroll.Value;
             // TODO: Remove
             //Console.WriteLine("Select START - {0}", ItemSelectionStart);
         }
@@ -1465,18 +1457,19 @@ namespace InCoding.DList
         private void UpdateSelectionRectangle(int x, int y)
         {
             // Update the selection rectangle
-            int ScrolledX = x + ContentRectangle.X + HScroll.Value;
-            int ScrolledY = y + ContentRectangle.Y + VScroll.Value;
+            int ScrolledX = x + _ContentRectangle.X + HScroll.Value;
+            int ScrolledY = y + _ContentRectangle.Y + VScroll.Value;
 
-            if ((Math.Abs(ItemSelectionStart.X - ScrolledX) + Math.Abs(ItemSelectionStart.Y - ScrolledY)) >= 3)
+            if ((Math.Abs(_ItemSelectionStart.X - ScrolledX) + Math.Abs(_ItemSelectionStart.Y - ScrolledY)) >= 3)
             {
-                ItemSelectionEnd = new Point(ScrolledX, ScrolledY);
+                _ItemSelectionEnd.X = ScrolledX;
+                _ItemSelectionEnd.Y = ScrolledY;
             }
 
             // Autoscroll up or down if the selection rectangle is dragged above or beneath the item list.
-            if (y >= ContentRectangle.Bottom || y < (ContentRectangle.Y + ItemHeight))
+            if (y >= _ContentRectangle.Bottom || y < (_ContentRectangle.Y + ItemHeight))
             {
-                if (ItemSelectionEnd.Y > ItemSelectionStart.Y)
+                if (_ItemSelectionEnd.Y > _ItemSelectionStart.Y)
                 {
                     int MaxVScroll = VScroll.Maximum - VScroll.LargeChange + 1;
 
@@ -1493,6 +1486,11 @@ namespace InCoding.DList
                     }
                 }
             }
+            else
+            {
+                // If we don't scroll we need to invalidate manually to draw the selection rectangle.
+                Invalidate();
+            }
 
             // TODO: Remove
             //Console.WriteLine("Select UPDATE - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
@@ -1502,8 +1500,8 @@ namespace InCoding.DList
         {
             if (Columns.Count > 0
                 && Items.Count > 0
-                && !ItemSelectionStart.IsEmpty
-                && !ItemSelectionEnd.IsEmpty)
+                && !_ItemSelectionStart.IsEmpty
+                && !_ItemSelectionEnd.IsEmpty)
             {
                 // Finish selection rectangle handling
 
@@ -1512,9 +1510,9 @@ namespace InCoding.DList
                 // TODO: Remove
                 //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
 
-                var Selection = Utils.GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
+                var Selection = Utils.GetRectangleFromPoints(_ItemSelectionStart, _ItemSelectionEnd);
 
-                int ItemsStartY = ContentRectangle.Y + ItemHeight;
+                int ItemsStartY = _ContentRectangle.Y + ItemHeight;
                 int ItemsEndY = ItemsStartY + Items.Count * ItemHeight - 1;
                 bool VerticalOverlap = (Selection.Y <= ItemsEndY);
                 bool HorizontalOverlap = false;
@@ -1522,7 +1520,7 @@ namespace InCoding.DList
                 if (VerticalOverlap)
                 {
                     // Check if the selection rectangle does horizontally overlap with any items
-                    int RightEdge = ContentRectangle.X;
+                    int RightEdge = _ContentRectangle.X;
 
                     foreach (var column in Columns)
                     {
@@ -1557,7 +1555,7 @@ namespace InCoding.DList
                     }
 
                     // Focus the last item in the direction the selection rectangle was drawn
-                    FocusedItemIndex = (ItemSelectionStart.Y < ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
+                    FocusedItemIndex = (_ItemSelectionStart.Y < _ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
 
                     // TODO: remove
                     //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
@@ -1565,8 +1563,8 @@ namespace InCoding.DList
             }
 
             // Clean up selection rectangle data
-            ItemSelectionStart = Point.Empty;
-            ItemSelectionEnd = Point.Empty;
+            _ItemSelectionStart = Point.Empty;
+            _ItemSelectionEnd = Point.Empty;
             _AddToSelection = false;
         }
     }
