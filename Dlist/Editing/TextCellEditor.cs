@@ -4,48 +4,25 @@ namespace InCoding.DList.Editing
 {
     public class TextCellEditor : CellEditorBase
     {
-        private TextBox TBox { get; }
+        private TextBox _TextBox;
+
+        public TextBox TextBox { get => _TextBox; }
 
         public TextCellEditor(HorizontalAlignment textAlignment = HorizontalAlignment.Center) : base(new TextBox())
         {
-            TBox = (TextBox)EditorControl;
-            TBox.TextAlign = textAlignment;
-            TBox.KeyPress += EditorControlKeyPress;
+            _TextBox = (TextBox)EditorControl;
+            _TextBox.TextAlign = textAlignment;
         }
 
         protected override void EditInternal(int columnIndex, int itemIndex, object value)
         {
-            TBox.Text = value.ToString();
-            TBox.SelectAll();
+            _TextBox.Text = value.ToString();
+            _TextBox.SelectAll();
         }
 
         protected override object GetResultValue()
         {
-            return TBox.Text;
-        }
-
-        protected override void OnDone(CellEditorDoneEventArgs args)
-        {
-            base.OnDone(args);
-            TBox.Text = "";
-        }
-
-        private void EditorControlKeyPress(object sender, KeyPressEventArgs e)
-        {
-            // This has to be handled in the KeyPress event, otherwise you'll 
-            // get a Windows 'Ding' sound everytime enter or escape is pressed.
-            switch (e.KeyChar)
-            {
-                case (char)Keys.Enter:
-                    EditDone();
-                    e.Handled = true;
-                    break;
-
-                case (char)Keys.Escape:
-                    Cancel();
-                    e.Handled = true;
-                    break;
-            }
+            return _TextBox.Text;
         }
     }
 }

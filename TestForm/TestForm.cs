@@ -16,24 +16,26 @@ namespace InCoding
 
             // Columns
             var Column1 = new Column("String");
-            Column1.ValueGetter = (object item) => ((TestItem)item).Name;
-            Column1.ValueSetter = (object item, object value) => ((TestItem)item).Name = value.ToString();
+            Column1.ValueGetter = (item) => ((TestItem)item).Name;
+            Column1.ValueSetter = (item, value) => ((TestItem)item).Name = value.ToString();
             Column1.CellEditor = new TextCellEditor();
             Column1.Width = 215;
 
             var Column2 = new Column("Numeric");
-            Column2.ValueGetter = (object item) => ((TestItem)item).NumericValue;
+            Column2.ValueGetter = (item) => ((TestItem)item).NumericValue;
             Column2.CellRenderer = new ProgressBarCellRenderer(0, 100);
 
             var Column3 = new Column("Boolean");
             Column3.Width = 150;
-            Column3.ValueGetter = (object item) => ((TestItem)item).Flag;
-            Column3.ValueSetter = (object item, object value) => ((TestItem)item).Flag = (bool)value;
+            Column3.ValueGetter = (item) => ((TestItem)item).Flag;
+            Column3.ValueSetter = (item, value) => ((TestItem)item).Flag = (bool)value;
             Column3.CellRenderer = new CheckBoxCellRenderer();
             Column3.CellEditor = new BooleanCellEditor();
 
             var Column4 = new Column("DateTime");
-            Column4.ValueGetter = (object item) => ((TestItem)item).Date;
+            Column4.ValueGetter = (item) => ((TestItem)item).Date;
+            Column4.ValueSetter = (item, value) => ((TestItem)item).Date = (DateTime)value;
+            Column4.CellEditor = new DateTimeCellEditor();
             var Temp = (TextCellRenderer)Column4.CellRenderer;
             Temp.Format = "{0:F}";
 

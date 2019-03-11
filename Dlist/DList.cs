@@ -887,11 +887,12 @@ namespace InCoding.DList
                     FocusedItemIndex = SelectedIndex;
                 }
 
-                // Begin cell editing if possible.
+                // Begin cell editing if a already focused item is clicked a second time.
                 if (_ItemSelectionEnd.IsEmpty && FocusedItemIndex >= 0 && (FocusedItemIndex == OldFocusIndex)
                     && !ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Control))
                 {
                     int ColumnIndex = GetColumnIndexAt(e.X);
+                    EnsureCellVisibility(ColumnIndex, FocusedItemIndex);
                     BeginCellEdit(ColumnIndex, FocusedItemIndex);
                 }
 
@@ -1218,6 +1219,7 @@ namespace InCoding.DList
 
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
+            CancelCellEdit();
             // TODO: Remove
             //Console.WriteLine("SetBoundsCoreStart: x{0}, y{1}, w{2}, h{3}", x, y, width, height);
 
@@ -1371,7 +1373,7 @@ namespace InCoding.DList
 
         public void EnsureItemVisibility(int itemIndex)
         {
-            if (Items.Count == 0 || itemIndex < 0) return;
+            if (itemIndex < 0 || Items.Count == 0 || itemIndex >= Items.Count) return;
 
             int ItemTop = itemIndex * ItemHeight;
             int ItemBottom = ItemTop + ItemHeight - 1;
@@ -1379,20 +1381,46 @@ namespace InCoding.DList
             int VisibleTop = VScroll.Value;
             int VisibleBottom = VScroll.Value + VScroll.LargeChange - 1;
 
-            // TODO: Remove
-            //Console.WriteLine("Ensure: ITop {0}, IBot {1}, VScroll {2}", ItemTop, ItemBottom, VScroll.Value);
-            //Console.WriteLine("Ensure: VTop {0}, VBot {1}", VisibleTop, VisibleBottom);
-
             int ScrollOffset = (ItemTop < VisibleTop)
                 ? ItemTop - VisibleTop
                 : (ItemBottom > VisibleBottom)
                 ? ItemBottom - VisibleBottom
                 : 0;
-            
-            // TODO: Remove
-            //Console.WriteLine("Ensure: SOffset {0}", ScrollOffset);
 
             VScroll.Value += ScrollOffset;
+        }
+
+        public void EnsureColumnVisibility(int columnIndex)
+        {
+            if (columnIndex < 0 || Columns.Count == 0 || columnIndex >= Columns.Count) return;
+
+            int ColumnLeft = 0;
+            int ColumnRight = 0;
+
+            for (int i = 0; i <= columnIndex; i++)
+            {
+                ColumnLeft = ColumnRight;
+                ColumnRight += Columns[i].Width;
+            }
+
+            ColumnRight--;
+
+            int VisibleLeft = HScroll.Value;
+            int VisibleRight = HScroll.Value + HScroll.LargeChange - 1;
+
+            int ScrollOffset = (ColumnLeft < VisibleLeft)
+                ? ColumnLeft - VisibleLeft
+                : (ColumnRight > VisibleRight)
+                ? ColumnRight - VisibleRight
+                : 0;
+
+            HScroll.Value += ScrollOffset;
+        }
+
+        public void EnsureCellVisibility(int columnIndex, int itemIndex)
+        {
+            EnsureColumnVisibility(columnIndex);
+            EnsureItemVisibility(itemIndex);
         }
 
         public void SelectAllItems()

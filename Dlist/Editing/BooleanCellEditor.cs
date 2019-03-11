@@ -3,7 +3,7 @@ namespace InCoding.DList.Editing
 {
     public class BooleanCellEditor : CellEditorBase
     {
-        public BooleanCellEditor()
+        public BooleanCellEditor() : base(null, false)
         {
         }
 

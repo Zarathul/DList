@@ -155,7 +155,7 @@
             this.dList1.Name = "dList1";
             this.dList1.SelectedItemColor = System.Drawing.SystemColors.Highlight;
             this.dList1.SelectionRectangleColor = System.Drawing.SystemColors.HotTrack;
-            this.dList1.Size = new System.Drawing.Size(479, 336);
+            this.dList1.Size = new System.Drawing.Size(479, 338);
             this.dList1.TabIndex = 3;
             this.dList1.Text = "dList1";
             // 

@@ -16,12 +16,17 @@ namespace InCoding.DList.Editing
 
         public event EventHandler<CellEditorDoneEventArgs> Done;
 
-        public CellEditorBase(Control editorControl = null)
+        public CellEditorBase(Control editorControl = null, bool defaultKeyHandling = true)
         {
             if (editorControl != null)
             {
                 EditorControl = editorControl;
                 EditorControl.Visible = false;
+
+                if (defaultKeyHandling)
+                {
+                    EditorControl.KeyPress += EditorControlKeyPress;
+                }
             }
         }
 
@@ -85,6 +90,24 @@ namespace InCoding.DList.Editing
             var Handler = Done;
 
             Handler?.Invoke(this, args);
+        }
+
+        private void EditorControlKeyPress(object sender, KeyPressEventArgs e)
+        {
+            // This has to be handled in the KeyPress event, otherwise you'll 
+            // get a Windows 'Ding' sound everytime enter or escape is pressed.
+            switch (e.KeyChar)
+            {
+                case (char)Keys.Enter:
+                    EditDone();
+                    e.Handled = true;
+                    break;
+
+                case (char)Keys.Escape:
+                    Cancel();
+                    e.Handled = true;
+                    break;
+            }
         }
 
         #region IDisposable

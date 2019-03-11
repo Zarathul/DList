@@ -48,6 +48,7 @@
     <Compile Include="Editing\BooleanCellEditor.cs" />
     <Compile Include="Editing\CellEditorBase.cs" />
     <Compile Include="Editing\CellEditorDoneEventArgs.cs" />
+    <Compile Include="Editing\DateTimeCellEditor.cs" />
     <Compile Include="Editing\ICellEditor.cs" />
     <Compile Include="Editing\TextCellEditor.cs" />
     <Compile Include="Rendering\CheckBoxCellRenderer.cs" />
