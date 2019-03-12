@@ -41,6 +41,8 @@ namespace InCoding.DList.Collections
 
         protected override void ClearItems()
         {
+            if (Items.Count == 0) return;
+
             foreach (var item in Items)
             {
                 var Iface = item as INotifyPropertyChanged;

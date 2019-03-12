@@ -20,30 +20,38 @@ namespace InCoding.DList
         private ValueGetterFunc _ValueGetter;
         private ValueSetterFunc _ValueSetter;
 
+        #region Properties
+
+        [DefaultValue("Column")]
         public string Name
         {
             get => _Name;
             set => Utils.CheckPropertyChanged(nameof(Name), ref _Name, ref value, OnPropertyChanged);
         }
 
+        [DefaultValue(80)]
         public int Width
         {
             get => _Width;
             set => Utils.CheckPropertyChanged(nameof(Width), ref _Width, ref value, OnPropertyChanged);
         }
 
+        [DefaultValue(null)]
         public Font HeaderFont
         {
             get => _HeaderFont;
             set => Utils.CheckPropertyChanged(nameof(HeaderFont), ref _HeaderFont, ref value, OnPropertyChanged);
         }
 
+        [DefaultValue(null)]
         public Font ItemFont
         {
             get => _ItemFont;
             set => Utils.CheckPropertyChanged(nameof(ItemFont), ref _ItemFont, ref value, OnPropertyChanged);
         }
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool CanEdit
         {
             get => (_ValueGetter != null && _ValueSetter != null && _CellEditor != null);
@@ -81,7 +89,13 @@ namespace InCoding.DList
             set => Utils.CheckPropertyChanged(nameof(ValueSetter), ref _ValueSetter, ref value, OnPropertyChanged);
         }
 
+        #endregion
+
+        #region Events
+
         public event PropertyChangedEventHandler PropertyChanged;
+        
+        #endregion
 
         public Column(string name) : this()
         {

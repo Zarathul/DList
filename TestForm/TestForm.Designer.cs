@@ -142,22 +142,22 @@
             this.listBoxEvents.Name = "listBoxEvents";
             this.listBoxEvents.Size = new System.Drawing.Size(446, 253);
             this.listBoxEvents.TabIndex = 0;
+            this.listBoxEvents.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listBoxEvents_MouseDoubleClick);
             // 
             // dList1
             // 
             this.dList1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.dList1.HighlightTextColor = System.Drawing.SystemColors.HighlightText;
-            this.dList1.HotItemColor = System.Drawing.SystemColors.HotTrack;
             this.dList1.IntegralHeight = true;
             this.dList1.Location = new System.Drawing.Point(476, 12);
             this.dList1.Name = "dList1";
-            this.dList1.SelectedItemColor = System.Drawing.SystemColors.Highlight;
-            this.dList1.SelectionRectangleColor = System.Drawing.SystemColors.HotTrack;
             this.dList1.Size = new System.Drawing.Size(479, 338);
             this.dList1.TabIndex = 3;
             this.dList1.Text = "dList1";
+            this.dList1.HeaderClicked += new System.EventHandler<InCoding.DList.HeaderClickEventArgs>(this.dList1_HeaderClicked);
+            this.dList1.CellClicked += new System.EventHandler<InCoding.DList.CellClickEventArgs>(this.dList1_CellClicked);
+            this.dList1.SelectedItemsChanged += new System.EventHandler(this.dList1_SelectedItemsChanged);
             // 
             // TestForm
             // 

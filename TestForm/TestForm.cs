@@ -5,6 +5,7 @@ using InCoding.DList;
 using InCoding.DList.Collections;
 using InCoding.DList.Rendering;
 using InCoding.DList.Editing;
+using System.Text;
 
 namespace InCoding
 {
@@ -108,6 +109,59 @@ namespace InCoding
             if (dList1.Items.Count > 0)
             {
                 dList1.Items.RemoveAt(dList1.Items.Count - 1);
+            }
+        }
+
+        private void dList1_CellClicked(object sender, CellClickEventArgs e)
+        {
+            string Entry = String.Format("CellClicked >> ColumnIndex: {0}, ItemIndex: {1}", e.ColumnIndex, e.ItemIndex);
+            listBoxEvents.Items.Add(Entry);
+            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+        }
+
+        private void dList1_HeaderClicked(object sender, HeaderClickEventArgs e)
+        {
+            string Entry = String.Format("HeaderClicked >> ColumnIndex: {0}", e.Index);
+            listBoxEvents.Items.Add(Entry);
+            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+        }
+
+        private void dList1_SelectedItemsChanged(object sender, EventArgs e)
+        {
+            var ItemIndices = new StringBuilder();
+
+            if (dList1.AllowMultipleSelectedItems)
+            {
+                foreach (var index in dList1.SelectedItemIndices)
+                {
+                    ItemIndices.AppendFormat("{0}, ", index);
+                }
+
+                if (dList1.SelectedItemIndices.Count > 0)
+                {
+                    ItemIndices.Remove(ItemIndices.Length - 2, 2);
+                }
+                else
+                {
+                    ItemIndices.Append("---");
+                }
+            }
+            else
+            {
+                ItemIndices.Append(dList1.SelectedItemIndex);
+            }
+
+            string Entry = String.Format("SelectedItemsChanged >> {0}", ItemIndices.ToString());
+            listBoxEvents.Items.Add(Entry);
+            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+        }
+
+        private void listBoxEvents_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                var LBox = (ListBox)sender;
+                LBox.Items.Clear();
             }
         }
     }

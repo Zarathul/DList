@@ -38,6 +38,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CellClickEventArgs.cs" />
     <Compile Include="Collections\ItemPropertyChangedEventArgs.cs" />
     <Compile Include="Collections\NotifyingCollection.cs" />
     <Compile Include="Collections\NotifyingCollectionChangedEventArgs.cs" />
@@ -51,6 +52,7 @@
     <Compile Include="Editing\DateTimeCellEditor.cs" />
     <Compile Include="Editing\ICellEditor.cs" />
     <Compile Include="Editing\TextCellEditor.cs" />
+    <Compile Include="HeaderClickEventArgs.cs" />
     <Compile Include="Rendering\CheckBoxCellRenderer.cs" />
     <Compile Include="Rendering\HeaderRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
