@@ -36,12 +36,16 @@ namespace InCoding.DList
         private int _HotHeaderIndex = -1;
         private int _PressedHeaderIndex = -1;
         private int _PressedItemIndex = -1;
+        private int _SelectionRectangleAlpha = 128;
         private Color _SelectedItemColor = SystemColors.Highlight;
         private Color _HotItemColor = SystemColors.HotTrack;
-        private Color _GridColor = Color.Black;
+        private Color _GridColor = SystemColors.ControlDark;
         private Color _HighlightTextColor = SystemColors.HighlightText;
         private Color _SelectionRectangleColor = SystemColors.HotTrack;
-        private Color _SelectionRectangleBorderColor = Color.Black;
+        private Color _SelectionRectangleBorderColor = SystemColors.HotTrack;
+        private Pen _GridPen;
+        private Pen _SelectionRectanglePen;
+        private SolidBrush _SelectionRectangleBrush;
         private Rectangle _ContentRectangle;
 
         private bool _AddToSelection = false;
@@ -67,10 +71,6 @@ namespace InCoding.DList
             }
         }
 
-        [DefaultValue(true)]
-        [Category("Behavior")]
-        public bool AllowMultipleSelectedItems { get; set; } = true;
-
         [DefaultValue(typeof(Color), "Highlight")]
         [Category("Appearance")]
         public Color SelectedItemColor
@@ -81,36 +81,6 @@ namespace InCoding.DList
                 if (_SelectedItemColor != value)
                 {
                     _SelectedItemColor = value;
-                    Invalidate();
-                }
-            }
-        }
-
-        [DefaultValue(typeof(Color), "HotTrack")]
-        [Category("Appearance")]
-        public Color SelectionRectangleColor
-        {
-            get => _SelectionRectangleColor;
-            set
-            {
-                if (_SelectionRectangleColor != value)
-                {
-                    _SelectionRectangleColor = value;
-                    Invalidate();
-                }
-            }
-        }
-
-        [DefaultValue(typeof(Color), "Black")]
-        [Category("Appearance")]
-        public Color SelectionRectangleBorderColor
-        {
-            get => _SelectionRectangleBorderColor;
-            set
-            {
-                if (_SelectionRectangleBorderColor != value)
-                {
-                    _SelectionRectangleBorderColor = value;
                     Invalidate();
                 }
             }
@@ -131,7 +101,7 @@ namespace InCoding.DList
             }
         }
 
-        [DefaultValue(typeof(Color), "Black")]
+        [DefaultValue(typeof(Color), "ControlDark")]
         [Category("Appearance")]
         public Color GridColor
         {
@@ -157,6 +127,61 @@ namespace InCoding.DList
                 {
                     _HighlightTextColor = value;
                     Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "HotTrack")]
+        [Category("Appearance")]
+        public Color SelectionRectangleColor
+        {
+            get => _SelectionRectangleColor;
+            set
+            {
+                if (_SelectionRectangleColor != value)
+                {
+                    _SelectionRectangleColor = value;
+
+                    _SelectionRectangleBrush?.Dispose();
+                    _SelectionRectangleBrush = new SolidBrush(Color.FromArgb(_SelectionRectangleAlpha, value));
+
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "HotTrack")]
+        [Category("Appearance")]
+        public Color SelectionRectangleBorderColor
+        {
+            get => _SelectionRectangleBorderColor;
+            set
+            {
+                if (_SelectionRectangleBorderColor != value)
+                {
+                    _SelectionRectangleBorderColor = value;
+
+                    _SelectionRectanglePen?.Dispose();
+                    _SelectionRectanglePen = new Pen(value);
+
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(128)]
+        [Category("Appearance")]
+        public int SelectionRectangleAlpha
+        {
+            get => _SelectionRectangleAlpha;
+            set
+            {
+                if (_SelectionRectangleAlpha != value)
+                {
+                    _SelectionRectangleAlpha = value;
+
+                    _SelectionRectangleBrush?.Dispose();
+                    _SelectionRectangleBrush = new SolidBrush(Color.FromArgb(value, _SelectionRectangleColor));
                 }
             }
         }
@@ -197,6 +222,14 @@ namespace InCoding.DList
         [DefaultValue(false)]
         [Category("Layout")]
         public bool IntegralHeight { get; set; } = false;
+
+        [DefaultValue(true)]
+        [Category("Behavior")]
+        public bool AllowMultipleSelectedItems { get; set; } = true;
+
+        [Category("Data")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+        public NotifyingCollection<Column> Columns { get; } = new NotifyingCollection<Column>();
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -289,10 +322,6 @@ namespace InCoding.DList
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IComplexRenderer HeaderRenderer { get; set; } = new HeaderRenderer();
 
-        [Category("Data")]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        public NotifyingCollection<Column> Columns { get; } = new NotifyingCollection<Column>();
-
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public NotifyingCollection<object> Items { get; } = new NotifyingCollection<object>();
@@ -300,6 +329,10 @@ namespace InCoding.DList
         protected VisualStyleRenderer VsRenderer { get; private set; }
         protected HScrollBar HScroll { get; }
         protected VScrollBar VScroll { get; }
+
+        protected Pen GridPen { get => _GridPen; }
+        protected Pen SelectionRectanglePen { get => _SelectionRectanglePen; }
+        protected SolidBrush SelectionRectangleBrush { get => _SelectionRectangleBrush; }
 
         protected override Size DefaultMinimumSize
         {
@@ -357,6 +390,11 @@ namespace InCoding.DList
             Columns.ItemChanged += ColumnChanged;
 
             SelectedItemIndices.CollectionChanged += SelectedItemIndicesChanged;
+
+            // Create initial pens and brushes
+            _GridPen = new Pen(_GridColor);
+            _SelectionRectanglePen = new Pen(_SelectionRectangleBorderColor);
+            _SelectionRectangleBrush = new SolidBrush(Color.FromArgb(_SelectionRectangleAlpha, _SelectionRectangleColor));
         }
 
         #region Drawing
@@ -479,42 +517,38 @@ namespace InCoding.DList
 
         protected void DrawGrid(Graphics gfx)
         {
-            Color Color = (SetVisualStyleRendererElement(VisualStyleElement.Header.Item.Normal)) ? VsRenderer.GetColor(ColorProperty.EdgeFillColor) : GridColor;
             var X = _ContentRectangle.X - 1 - HScroll.Value;
             var Y1 = _ContentRectangle.Y + ItemHeight;
             var Y2 = Math.Min(_ContentRectangle.Bottom - 1, Y1 + Items.Count * ItemHeight - 1);
 
-            using (var gridPen = new Pen(Color))
+            var TotalColumnWidth = 0;
+
+            // Vertical grid lines.
+            foreach (var column in Columns)
             {
-                var TotalColumnWidth = 0;
+                TotalColumnWidth += column.Width;
+                X += column.Width;
+                gfx.DrawLine(GridPen, X, Y1, X, Y2);
+            }
 
-                // Vertical grid lines.
-                foreach (var column in Columns)
+            // Horizontal grid lines.
+            var X1 = _ContentRectangle.X;
+            var X2 = X1 + TotalColumnWidth - 1;
+            var Y = _ContentRectangle.Top + ItemHeight - 1;
+
+            // Headers
+            gfx.DrawLine(GridPen, X1, Y, X2, Y);
+            Y += ItemHeight - VScroll.Value;
+
+            // Items
+            foreach (var item in Items)
+            {
+                if ((Y >= _ContentRectangle.Y + ItemHeight) && (Y < _ContentRectangle.Bottom))
                 {
-                    TotalColumnWidth += column.Width;
-                    X += column.Width;
-                    gfx.DrawLine(gridPen, X, Y1, X, Y2);
+                    gfx.DrawLine(GridPen, X1, Y, X2, Y);
                 }
 
-                // Horizontal grid lines.
-                var X1 = _ContentRectangle.X;
-                var X2 = X1 + TotalColumnWidth - 1;
-                var Y = _ContentRectangle.Top + ItemHeight - 1;
-
-                // Headers
-                gfx.DrawLine(gridPen, X1, Y, X2, Y);
-                Y += ItemHeight - VScroll.Value;
-
-                // Items
-                foreach (var item in Items)
-                {
-                    if ((Y >= _ContentRectangle.Y + ItemHeight) && (Y < _ContentRectangle.Bottom))
-                    {
-                        gfx.DrawLine(gridPen, X1, Y, X2, Y);
-                    }
-
-                    Y += ItemHeight;
-                }
+                Y += ItemHeight;
             }
         }
 
@@ -547,18 +581,8 @@ namespace InCoding.DList
 
             // TODO: remove
             //Console.WriteLine("Select DRAW - {0}", SelectionRectangle);
-
-            int Alpha = (SelectionRectangleColor.A <= 200) ? SelectionRectangleColor.A : 128;
-
-            using (var rectangleBrush = new SolidBrush(Color.FromArgb(Alpha, SelectionRectangleColor)))
-            {
-                gfx.FillRectangle(rectangleBrush, SelectionRectangle);
-            }
-
-            using (Pen framePen = new Pen(SelectionRectangleBorderColor))
-            {
-                gfx.DrawRectangle(framePen, SelectionRectangle);
-            }
+            gfx.FillRectangle(SelectionRectangleBrush, SelectionRectangle);
+            gfx.DrawRectangle(SelectionRectanglePen, SelectionRectangle);
         }
 
         protected bool SetVisualStyleRendererElement(VisualStyleElement element)

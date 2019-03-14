@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace InCoding.DList.Rendering
 {
-    public class ProgressBarCellRenderer : IComplexRenderer
+    public class ProgressBarCellRenderer : VisualStyleRendererBase, IComplexRenderer
     {
         public int MinValue { get; set; }
         public int MaxValue { get; set; }
@@ -28,17 +28,14 @@ namespace InCoding.DList.Rendering
             // HACK: @GRID 3 is subtracted here instead of 2 as a workaround to not draw under the grid if it's enabled.
             var Bounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, bounds.Width - 3, bounds.Height - 3);
 
-            using (var backgroundBrush = new SolidBrush(backColor))
-            {
-                gfx.FillRectangle(backgroundBrush, bounds);
-            }
+            var BackgroundBrush = GetBrush(backColor);
+            gfx.FillRectangle(BackgroundBrush, bounds);
 
             int ActualChunkThickness = (ChunkThickness > 0) ? ChunkThickness : ProgressBarRenderer.ChunkThickness;
             int ActualChunkSpaceThickness = (ChunkSpaceThickness >= 0) ? ChunkSpaceThickness : ProgressBarRenderer.ChunkSpaceThickness;
             int TotalChunkThickness = ActualChunkThickness + ActualChunkSpaceThickness;
             int Value = Utils.Clamp((int)value, MinValue, MaxValue);
             double PercentageFactor = ((double)Value + Math.Abs(MinValue)) / (MaxValue - MinValue);
-
 
             int BarThickness = 0;
             Rectangle BarBounds;

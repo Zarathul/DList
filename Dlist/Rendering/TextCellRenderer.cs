@@ -13,10 +13,8 @@ namespace InCoding.DList.Rendering
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
-            using (var backBrush = new SolidBrush(backColor))
-            {
-                gfx.FillRectangle(backBrush, bounds.ToGDI()); // @GDI
-            }
+            var BackgroundBrush = GetBrush(backColor);
+            gfx.FillRectangle(BackgroundBrush, bounds.ToGDI()); // @GDI
 
             if (value != null)
             {

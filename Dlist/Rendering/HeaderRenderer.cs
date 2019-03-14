@@ -36,11 +36,8 @@ namespace InCoding.DList.Rendering
             }
             else
             {
-                using (var BackgroundBrush = new SolidBrush(backColor))
-                {
-                    gfx.FillRectangle(BackgroundBrush, bounds.ToGDI());
-                }
-
+                var BackgroundBrush = GetBrush(backColor);
+                gfx.FillRectangle(BackgroundBrush, bounds.ToGDI());
                 gfx.DrawLine(Pens.Black, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
             }
 
