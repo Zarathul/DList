@@ -25,9 +25,6 @@ namespace InCoding.DList.Rendering
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
-            // HACK: @GRID 3 is subtracted here instead of 2 as a workaround to not draw under the grid if it's enabled.
-            var Bounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, bounds.Width - 3, bounds.Height - 3);
-
             var BackgroundBrush = GetBrush(backColor);
             gfx.FillRectangle(BackgroundBrush, bounds);
 
@@ -40,6 +37,9 @@ namespace InCoding.DList.Rendering
             int BarThickness = 0;
             Rectangle BarBounds;
             Rectangle ChunkBounds;
+            // Leave a 1 pixel wide border around the progressbar.
+            var Bounds = bounds;
+            Bounds.Inflate(-1, -1);
 
             if (Horizontal)
             {
@@ -69,7 +69,7 @@ namespace InCoding.DList.Rendering
 
             if (ActualChunkSpaceThickness <= 0)
             {
-                // No chunks
+                // No chunks, so draw one big chunk which should be a solid bar.
                 ProgressBarRenderer.DrawHorizontalChunks(gfx, BarBounds);
             }
             else

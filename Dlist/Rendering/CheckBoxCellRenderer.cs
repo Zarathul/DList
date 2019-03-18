@@ -13,7 +13,7 @@ namespace InCoding.DList.Rendering
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
             var BackgroundBrush = GetBrush(backColor);
-            gfx.FillRectangle(BackgroundBrush, bounds.ToGDI());
+            gfx.FillRectangle(BackgroundBrush, bounds);
 
             bool Checked = (bool)value;
             var CheckBoxDrawState = (Checked) ? Vs.CheckBoxState.CheckedNormal : Vs.CheckBoxState.UncheckedNormal;

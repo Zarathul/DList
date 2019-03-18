@@ -14,12 +14,11 @@ namespace InCoding.DList.Rendering
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
             var BackgroundBrush = GetBrush(backColor);
-            gfx.FillRectangle(BackgroundBrush, bounds.ToGDI()); // @GDI
+            gfx.FillRectangle(BackgroundBrush, bounds);
 
             if (value != null)
             {
-                var Bounds = bounds.ToGDI();  // HACK: @GRID
-                TextRenderer.DrawText(gfx, (Format != null) ? string.Format(Format, value) : value.ToString(), font, Bounds, foreColor, TextFlags);
+                TextRenderer.DrawText(gfx, (Format != null) ? string.Format(Format, value) : value.ToString(), font, bounds, foreColor, TextFlags);
             }
         }
     }

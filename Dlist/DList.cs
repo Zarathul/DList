@@ -15,8 +15,8 @@ using InCoding.DList.Editing;
  * Graphics.DrawRectangle() for example will draw from (X,Y) to (Right,Bottom) where 
  * Right = X + Width and Bottom = Y + Height. Therefore drawing a rectangle at (0, 0) with 
  * a width and height of 10 will result in a 11 pixels wide and high rectangle. What makes 
- * things worse is that this is not true for every method. Some honor the width and height 
- * properties, while others don't. 
+ * things worse is that this is not true for every method. Graphics.FillRectangle() will 
+ * draw a 10 pixel wide and 10 pixel high filled rectangle when called with the same parameters. 
  * System.Drawing.Rectancle adopted the GDI way of calculating Right and Bottom, so all 
  * code in this project is (or should be written) assuming those properties return wrong 
  * values. Meaning either don't use them or subtract one. Therefore when passing rectangles 
@@ -473,7 +473,7 @@ namespace InCoding.DList
                 if (Bounds.X >= _ContentRectangle.Right) break;
                 Bounds.Width = column.Width;
                 State = (Index == HotHeaderIndex) ? RenderState.Hot : (Index == PressedHeaderIndex) ? RenderState.Pressed : RenderState.Normal;
-                HeaderRenderer.Draw(gfx, Bounds, State, column.Name, ForeColor, BackColor, Font);
+                HeaderRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1), State, column.Name, ForeColor, BackColor, Font);
                 Bounds.X += column.Width;
                 Index++;
             }
@@ -510,7 +510,7 @@ namespace InCoding.DList
                         ? SelectedItemColor
                         : (State.HasFlag(RenderState.Hot)) ? HotItemColor : BackColor;
 
-                    column.CellRenderer.Draw(gfx, Bounds, State, CellValue, TextColor, BackgroundColor, Font);
+                    column.CellRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : Bounds.ToGDI(), State, CellValue, TextColor, BackgroundColor, Font);
 
                     Bounds.Y += ItemHeight;
                 }
@@ -581,13 +581,13 @@ namespace InCoding.DList
 
         protected void DrawSelectionRectangle(Graphics gfx, Point start, Point end)
         {
-            var SelectionRectangle = Utils.GetRectangleFromPoints(start, end).ToGDI();
+            var SelectionRectangle = Utils.GetRectangleFromPoints(start, end);
             SelectionRectangle.Offset(-HScroll.Value, -VScroll.Value);
 
             // TODO: remove
             //Console.WriteLine("Select DRAW - {0}", SelectionRectangle);
             gfx.FillRectangle(SelectionRectangleBrush, SelectionRectangle);
-            gfx.DrawRectangle(SelectionRectanglePen, SelectionRectangle);
+            gfx.DrawRectangle(SelectionRectanglePen, SelectionRectangle.ToGDI());
         }
 
         protected bool SetVisualStyleRendererElement(VisualStyleElement element)

@@ -37,16 +37,15 @@ namespace InCoding.DList.Rendering
             else
             {
                 var BackgroundBrush = GetBrush(backColor);
-                gfx.FillRectangle(BackgroundBrush, bounds.ToGDI());
-                gfx.DrawLine(Pens.Black, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
+                gfx.FillRectangle(BackgroundBrush, bounds);
+                gfx.DrawLine(SystemPens.ControlDark, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
             }
 
             // The VisualStyleRenderer does not center the text vertically with the correct TextFormatFlags, 
             // so we draw it ourselves even if visual styles are on.
             if (value != null)
             {
-                var Bounds = bounds.ToGDI();  // HACK: @GRID
-                TextRenderer.DrawText(gfx, value.ToString(), font, Bounds, foreColor, TextFlags);
+                TextRenderer.DrawText(gfx, value.ToString(), font, bounds, foreColor, TextFlags);
             }
         }
     }
