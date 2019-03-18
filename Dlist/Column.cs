@@ -7,10 +7,6 @@ using InCoding.DList.Editing;
 
 namespace InCoding.DList
 {
-    // TODO: Maybe replace these with Func and Action.
-    public delegate object ValueGetterFunc(object item);
-    public delegate void ValueSetterFunc(object item, object value);
-
     public class Column : INotifyPropertyChanged
     {
         private string _Name = "Column";
@@ -19,8 +15,8 @@ namespace InCoding.DList
         private Font _ItemFont;
         private IRenderer _CellRenderer = new TextCellRenderer();
         private ICellEditor _CellEditor;
-        private ValueGetterFunc _ValueGetter;
-        private ValueSetterFunc _ValueSetter;
+        private Func<object, object> _ValueGetter;
+        private Action<object, object> _ValueSetter;
         private Func<object, (Color, Color)> _CellColorEvaluator;
 
         #region Properties
@@ -78,7 +74,7 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ValueGetterFunc ValueGetter
+        public Func<object, object> ValueGetter
         {
             get => _ValueGetter;
             set => Utils.CheckPropertyChanged(nameof(ValueGetter), ref _ValueGetter, ref value, OnPropertyChanged);
@@ -86,7 +82,7 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ValueSetterFunc ValueSetter
+        public Action<object, object> ValueSetter
         {
             get => _ValueSetter;
             set => Utils.CheckPropertyChanged(nameof(ValueSetter), ref _ValueSetter, ref value, OnPropertyChanged);
