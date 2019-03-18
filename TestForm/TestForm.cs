@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 using InCoding.DList;
@@ -21,6 +22,8 @@ namespace InCoding
             Column1.ValueSetter = (item, value) => ((TestItem)item).Name = value.ToString();
             Column1.CellEditor = new TextCellEditor();
             Column1.Width = 215;
+            Column1.HeaderFont = new Font(dList1.HeaderFont, FontStyle.Bold | FontStyle.Italic);
+            Column1.ItemFont = new Font(dList1.Font, FontStyle.Italic);
 
             var Column2 = new Column("Numeric");
             Column2.ValueGetter = (item) => ((TestItem)item).NumericValue;
@@ -32,6 +35,7 @@ namespace InCoding
             Column3.ValueSetter = (item, value) => ((TestItem)item).Flag = (bool)value;
             Column3.CellRenderer = new CheckBoxCellRenderer();
             Column3.CellEditor = new BooleanCellEditor();
+            Column3.CellColorEvaluator = (value) => ((bool)value) ? (Color.Black, Color.Green) : (Color.Black, Color.Red);
 
             var Column4 = new Column("DateTime");
             Column4.ValueGetter = (item) => ((TestItem)item).Date;
@@ -44,6 +48,8 @@ namespace InCoding
             dList1.Columns.Add(Column2);
             dList1.Columns.Add(Column3);
             dList1.Columns.Add(Column4);
+
+            dList1.ItemColorEvaluator = (item) => (((TestItem)item).NumericValue > 50) ? (Color.Black, Color.Gold) : (dList1.ForeColor, dList1.BackColor);
 
             // Progressbar test items
             var PTestItem0 = TestItem.GenerateRandom(0);

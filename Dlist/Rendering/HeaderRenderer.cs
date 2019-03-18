@@ -17,6 +17,8 @@ namespace InCoding.DList.Rendering
 
         public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
         {
+            Color TextColor = Color.Empty;
+
             if (Application.RenderWithVisualStyles && VsRenderer != null)
             {
                 if (state.HasFlag(RenderState.Hot))
@@ -33,10 +35,14 @@ namespace InCoding.DList.Rendering
                 }
 
                 VsRenderer.DrawBackground(gfx, bounds);
+                TextColor = VsRenderer.GetColor(Styles.ColorProperty.TextColor);
             }
             else
             {
-                var BackgroundBrush = GetBrush(backColor);
+                var BackgroundBrush = GetBrush((state.HasFlag(RenderState.Hot))
+                    ? SystemColors.HotTrack
+                    : (state.HasFlag(RenderState.Pressed)) ? SystemColors.Highlight : backColor);
+
                 gfx.FillRectangle(BackgroundBrush, bounds);
                 gfx.DrawLine(SystemPens.ControlDark, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
             }
@@ -45,7 +51,12 @@ namespace InCoding.DList.Rendering
             // so we draw it ourselves even if visual styles are on.
             if (value != null)
             {
-                TextRenderer.DrawText(gfx, value.ToString(), font, bounds, foreColor, TextFlags);
+                if (TextColor.IsEmpty)
+                {
+                    TextColor = (state.HasFlag(RenderState.Normal)) ? foreColor : SystemColors.HighlightText;
+                }
+
+                TextRenderer.DrawText(gfx, value.ToString(), font, bounds, TextColor, TextFlags);
             }
         }
     }

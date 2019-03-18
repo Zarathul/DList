@@ -43,6 +43,9 @@ namespace InCoding.DList
         private Color _HighlightTextColor = SystemColors.HighlightText;
         private Color _SelectionRectangleColor = SystemColors.HotTrack;
         private Color _SelectionRectangleBorderColor = SystemColors.HotTrack;
+        private Font _HeaderFont;
+        private IComplexRenderer _HeaderRenderer = new HeaderRenderer();
+        private Func<object, (Color, Color)> _ItemColorEvaluator;
         private Pen _GridPen;
         private Pen _SelectionRectanglePen;
         private SolidBrush _SelectionRectangleBrush;
@@ -169,6 +172,21 @@ namespace InCoding.DList
                     _SelectionRectanglePen?.Dispose();
                     _SelectionRectanglePen = new Pen(value);
 
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(null)]
+        [Category("Appearance")]
+        public Font HeaderFont
+        {
+            get => _HeaderFont;
+            set
+            {
+                if (_HeaderFont != value)
+                {
+                    _HeaderFont = value;
                     Invalidate();
                 }
             }
@@ -325,7 +343,33 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IComplexRenderer HeaderRenderer { get; set; } = new HeaderRenderer();
+        public IComplexRenderer HeaderRenderer
+        {
+            get => _HeaderRenderer;
+            set
+            {
+                if (_HeaderRenderer != value)
+                {
+                    value = _HeaderRenderer;
+                    Invalidate();
+                }
+            }
+        }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Func<object, (Color, Color)> ItemColorEvaluator
+        {
+            get => _ItemColorEvaluator;
+            set
+            {
+                if (_ItemColorEvaluator != value)
+                {
+                    _ItemColorEvaluator = value;
+                    Invalidate();
+                }
+            }
+        }
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -471,9 +515,13 @@ namespace InCoding.DList
             foreach (var column in Columns)
             {
                 if (Bounds.X >= _ContentRectangle.Right) break;
+
                 Bounds.Width = column.Width;
                 State = (Index == HotHeaderIndex) ? RenderState.Hot : (Index == PressedHeaderIndex) ? RenderState.Pressed : RenderState.Normal;
-                HeaderRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1), State, column.Name, ForeColor, BackColor, Font);
+                var HeaderFont = column.HeaderFont ?? _HeaderFont ?? Font;
+
+                HeaderRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1), State, column.Name, ForeColor, BackColor, HeaderFont);
+
                 Bounds.X += column.Width;
                 Index++;
             }
@@ -505,12 +553,27 @@ namespace InCoding.DList
                         State |= RenderState.Focused;
                     }
 
-                    var TextColor = (State.HasFlag(RenderState.Normal)) ? ForeColor : HighlightTextColor;
+                    var ForegroundColor = (State.HasFlag(RenderState.Normal)) ? Color.Empty : HighlightTextColor;
                     var BackgroundColor = (State.HasFlag(RenderState.Selected))
                         ? SelectedItemColor
-                        : (State.HasFlag(RenderState.Hot)) ? HotItemColor : BackColor;
+                        : (State.HasFlag(RenderState.Hot)) ? HotItemColor : Color.Empty;
 
-                    column.CellRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : Bounds.ToGDI(), State, CellValue, TextColor, BackgroundColor, Font);
+                    if (ForegroundColor.IsEmpty || BackgroundColor.IsEmpty)
+                    {
+                        // SPEED: The ItemColorEvaluator is invoked for every cell if there is no CellColorEvaluator. Since drawing 
+                        // is done column by column instead of item by item, the only way to get around this would be to cache the 
+                        // ItemColorEvaluator results, which might not be worth it.
+                        (Color Fore, Color Back) = GetCellColors(column, Item, CellValue);
+
+                        if (ForegroundColor.IsEmpty) ForegroundColor = Fore;
+                        if (BackgroundColor.IsEmpty) BackgroundColor = Back;
+                    }
+
+                    var ItemFont = column.ItemFont ?? Font;
+
+                    // ToGDI() is abused here to shrink the cells bounds if the grid is shown. Since the grid will always 
+                    // occupy the rightmost and bottommost pixels of the cell, ToGDI() gets us exactly what we need.
+                    column.CellRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : Bounds.ToGDI(), State, CellValue, ForegroundColor, BackgroundColor, ItemFont);
 
                     Bounds.Y += ItemHeight;
                 }
@@ -772,28 +835,37 @@ namespace InCoding.DList
         {
             if (Items.Count == 0) return;
 
+            int OldFocusedItemIndex = FocusedItemIndex;
+
             if (FocusedItemIndex >= 1)
             {
                 FocusedItemIndex -= 1;
             }
-
-            if (!AllowMultipleSelectedItems)
+            else if (FocusedItemIndex < 0)
             {
-                if (!modifiers.HasFlag(Keys.Control))
-                {
-                    SelectedItemIndex = FocusedItemIndex;
-                }
+                FocusedItemIndex = Items.Count - 1;
             }
-            else
-            {
-                if (!modifiers.HasFlag(Keys.Control))
-                {
-                    if (!modifiers.HasFlag(Keys.Shift))
-                    {
-                        SelectedItemIndices.Clear();
-                    }
 
-                    SelectedItemIndices.Add(FocusedItemIndex);
+            if (FocusedItemIndex != OldFocusedItemIndex)
+            {
+                if (!AllowMultipleSelectedItems)
+                {
+                    if (!modifiers.HasFlag(Keys.Control))
+                    {
+                        SelectedItemIndex = FocusedItemIndex;
+                    }
+                }
+                else
+                {
+                    if (!modifiers.HasFlag(Keys.Control))
+                    {
+                        if (!modifiers.HasFlag(Keys.Shift))
+                        {
+                            SelectedItemIndices.Clear();
+                        }
+
+                        SelectedItemIndices.Add(FocusedItemIndex);
+                    }
                 }
             }
 
@@ -804,28 +876,33 @@ namespace InCoding.DList
         {
             if (Items.Count == 0) return;
 
+            int OldFocusedItemIndex = FocusedItemIndex;
+
             if (FocusedItemIndex < Items.Count - 1)
             {
                 FocusedItemIndex += 1;
             }
 
-            if (!AllowMultipleSelectedItems)
+            if (FocusedItemIndex != OldFocusedItemIndex)
             {
-                if (!modifiers.HasFlag(Keys.Control))
+                if (!AllowMultipleSelectedItems)
                 {
-                    SelectedItemIndex = FocusedItemIndex;
-                }
-            }
-            else
-            {
-                if (!modifiers.HasFlag(Keys.Control))
-                {
-                    if (!modifiers.HasFlag(Keys.Shift))
+                    if (!modifiers.HasFlag(Keys.Control))
                     {
-                        SelectedItemIndices.Clear();
+                        SelectedItemIndex = FocusedItemIndex;
                     }
+                }
+                else
+                {
+                    if (!modifiers.HasFlag(Keys.Control))
+                    {
+                        if (!modifiers.HasFlag(Keys.Shift))
+                        {
+                            SelectedItemIndices.Clear();
+                        }
 
-                    SelectedItemIndices.Add(FocusedItemIndex);
+                        SelectedItemIndices.Add(FocusedItemIndex);
+                    }
                 }
             }
 
@@ -1367,6 +1444,22 @@ namespace InCoding.DList
 
             // TODO: Remove
             Console.WriteLine("EditDone - success: {0}, value: {1}", e.Success, e.NewValue);
+        }
+
+        private (Color, Color) GetCellColors(Column column, object item, object cellValue)
+        {
+            if (column.CellColorEvaluator != null)
+            {
+                return column.CellColorEvaluator(cellValue);
+            }
+            else if (ItemColorEvaluator != null)
+            {
+                return ItemColorEvaluator(item);
+            }
+            else
+            {
+                return (ForeColor, BackColor);
+            }
         }
 
         #endregion

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Drawing;
 
 using InCoding.DList.Rendering;
@@ -6,6 +7,7 @@ using InCoding.DList.Editing;
 
 namespace InCoding.DList
 {
+    // TODO: Maybe replace these with Func and Action.
     public delegate object ValueGetterFunc(object item);
     public delegate void ValueSetterFunc(object item, object value);
 
@@ -19,6 +21,7 @@ namespace InCoding.DList
         private ICellEditor _CellEditor;
         private ValueGetterFunc _ValueGetter;
         private ValueSetterFunc _ValueSetter;
+        private Func<object, (Color, Color)> _CellColorEvaluator;
 
         #region Properties
 
@@ -87,6 +90,14 @@ namespace InCoding.DList
         {
             get => _ValueSetter;
             set => Utils.CheckPropertyChanged(nameof(ValueSetter), ref _ValueSetter, ref value, OnPropertyChanged);
+        }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Func<object, (Color, Color)> CellColorEvaluator
+        {
+            get => _CellColorEvaluator;
+            set => Utils.CheckPropertyChanged(nameof(CellColorEvaluator), ref _CellColorEvaluator, ref value, OnPropertyChanged);
         }
 
         #endregion
