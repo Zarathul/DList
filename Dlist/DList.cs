@@ -897,6 +897,12 @@ namespace InCoding.DList
             // TODO: remove
             Console.WriteLine("Mouse UP - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
 
+            // This is a necessary precaution for edit controls with strange focus behavior like DateTimePicker.
+            if (_ActiveCellEditor != null)
+            {
+                _ActiveCellEditor.Cancel();
+            }
+
             if (PressedHeaderIndex >= 0)
             {
                 int CurrentHeaderIndex = GetColumnHeaderIndexAt(e.X, e.Y);
@@ -956,6 +962,7 @@ namespace InCoding.DList
                     // Begin cell editing if an already focused item is clicked a second time.
                     if (!AddToSelection && FocusedItemIndex >= 0 && FocusedItemIndex == OldFocusedItemIndex)
                     {
+                        _ItemSelectionStart = Point.Empty;
                         EnsureCellVisibility(ColumnIndex, FocusedItemIndex);
                         BeginCellEdit(ColumnIndex, FocusedItemIndex);
                     }
@@ -1348,6 +1355,8 @@ namespace InCoding.DList
             var Editor = (ICellEditor)sender;
             Editor.Done -= CellEditorDone;
 
+            _ActiveCellEditor = null;
+
             Focus();
 
             // TODO: Remove
@@ -1531,10 +1540,10 @@ namespace InCoding.DList
                 var Editor = Column.CellEditor;
                 Editor.Done += CellEditorDone;
 
+                _ActiveCellEditor = Editor;
+
                 var CellBounds = GetCellBounds(columnIndex, FocusedItemIndex);
                 Editor.Edit(CellBounds, columnIndex, FocusedItemIndex, Value);
-
-                _ActiveCellEditor = Column.CellEditor;
 
                 // TODO: Remove
                 Console.WriteLine("CellBounds: {0}", CellBounds);
