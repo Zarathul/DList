@@ -48,11 +48,12 @@ namespace InCoding.DList
         private SolidBrush _SelectionRectangleBrush;
         private Rectangle _ContentRectangle;
 
-        private bool _AddToSelection = false;
-        private bool _FirstPaint = true;
-        private Point _ItemSelectionStart = Point.Empty;
-        private Point _ItemSelectionEnd = Point.Empty;
-        private ICellEditor _ActiveCellEditor;
+        private bool AddToSelection = false;
+        private bool IsFirstPaint = true;
+        private bool IsMouseOnResizeGrip = false;
+        private Point ItemSelectionStart = Point.Empty;
+        private Point ItemSelectionEnd = Point.Empty;
+        private ICellEditor ActiveCellEditor;
 
         #region Properties
         
@@ -423,7 +424,7 @@ namespace InCoding.DList
                 DrawItems(Gfx, FirstVisibleItemIndex);
 
                 if (FocusedItemIndex >= 0) DrawFocusRectangle(Gfx);
-                if (!_ItemSelectionStart.IsEmpty && !_ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx, _ItemSelectionStart, _ItemSelectionEnd);
+                if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx, ItemSelectionStart, ItemSelectionEnd);
             }
 
             if (Columns.Count > 0)
@@ -438,9 +439,9 @@ namespace InCoding.DList
             // OnPaint() and when SetBoundsCore() is called the first few times, OnPaint() has not been called yet. 
             // Therefore, the height calculation in SetBoundsCore() will fail. Just calling SetBoundsCore() once
             // after the ContentRectangle has been created will fix this.
-            if (_FirstPaint)
+            if (IsFirstPaint)
             {
-                _FirstPaint = false;
+                IsFirstPaint = false;
                 SetBoundsCore(Left, Top, Width, Height, BoundsSpecified.All);
             }
         }
@@ -873,8 +874,7 @@ namespace InCoding.DList
 
                 Focus();
 
-                // TODO: Add IsColumnResizing instead of this hacky cursor comparison.
-                if (HotHeaderIndex >= 0 && Cursor.Current != Cursors.VSplit)
+                if (HotHeaderIndex >= 0 && !IsMouseOnResizeGrip)
                 {
                     PressedHeaderIndex = HotHeaderIndex;
                     HotHeaderIndex = -1;
@@ -902,9 +902,9 @@ namespace InCoding.DList
             Console.WriteLine("Mouse UP - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
 
             // This is a necessary precaution for edit controls with strange focus behavior like DateTimePicker.
-            if (_ActiveCellEditor != null)
+            if (ActiveCellEditor != null)
             {
-                _ActiveCellEditor.Cancel();
+                ActiveCellEditor.Cancel();
             }
 
             if (PressedHeaderIndex >= 0)
@@ -925,7 +925,7 @@ namespace InCoding.DList
                 int OldFocusedItemIndex = FocusedItemIndex;
                 bool AddToSelection = ModifierKeys.HasFlag(Keys.Shift) && ModifierKeys.HasFlag(Keys.Control);
                 bool ItemWasClicked = CurrentItemIndex >= 0 && CurrentItemIndex == _PressedItemIndex;
-                bool MultiSelecting = !_ItemSelectionEnd.IsEmpty;
+                bool MultiSelecting = !ItemSelectionEnd.IsEmpty;
 
                 if (AllowMultipleSelectedItems)
                 {
@@ -966,7 +966,7 @@ namespace InCoding.DList
                     // Begin cell editing if an already focused item is clicked a second time.
                     if (!AddToSelection && FocusedItemIndex >= 0 && FocusedItemIndex == OldFocusedItemIndex)
                     {
-                        _ItemSelectionStart = Point.Empty;
+                        ItemSelectionStart = Point.Empty;
                         EnsureCellVisibility(ColumnIndex, FocusedItemIndex);
                         BeginCellEdit(ColumnIndex, FocusedItemIndex);
                     }
@@ -1008,15 +1008,18 @@ namespace InCoding.DList
                         if (ScrolledMouseX >= GripStart && ScrolledMouseX <= RightColumnEdge)
                         {
                             Cursor = Cursors.VSplit;
+                            IsMouseOnResizeGrip = true;
                         }
                         else
                         {
                             Cursor = Cursors.Default;
+                            IsMouseOnResizeGrip = false;
                         }
                     }
                     else
                     {
                         Cursor = Cursors.Default;
+                        IsMouseOnResizeGrip = false;
                     }
                 }
                 // TODO: remove
@@ -1025,7 +1028,7 @@ namespace InCoding.DList
             else if (e.Button == MouseButtons.Left)
             {
                 // Resize the hot column.
-                if (Cursor == Cursors.VSplit)
+                if (IsMouseOnResizeGrip)
                 {
                     int RightColumnEdge = _ContentRectangle.X;
 
@@ -1049,7 +1052,7 @@ namespace InCoding.DList
                 }
                 else
                 {
-                    if (AllowMultipleSelectedItems && !_ItemSelectionStart.IsEmpty)
+                    if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
                     {
                         UpdateSelectionRectangle(e.X, e.Y);
                     }
@@ -1358,7 +1361,7 @@ namespace InCoding.DList
             var Editor = (ICellEditor)sender;
             Editor.Done -= CellEditorDone;
 
-            _ActiveCellEditor = null;
+            ActiveCellEditor = null;
 
             Focus();
 
@@ -1543,7 +1546,7 @@ namespace InCoding.DList
                 var Editor = Column.CellEditor;
                 Editor.Done += CellEditorDone;
 
-                _ActiveCellEditor = Editor;
+                ActiveCellEditor = Editor;
 
                 var CellBounds = GetCellBounds(columnIndex, FocusedItemIndex);
                 Editor.Edit(CellBounds, columnIndex, FocusedItemIndex, Value);
@@ -1555,9 +1558,9 @@ namespace InCoding.DList
 
         public void CancelCellEdit()
         {
-            if (_ActiveCellEditor != null)
+            if (ActiveCellEditor != null)
             {
-                _ActiveCellEditor.Cancel();
+                ActiveCellEditor.Cancel();
             }
         }
 
@@ -1565,11 +1568,11 @@ namespace InCoding.DList
         {
             if (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control))
             {
-                _AddToSelection = true;
+                AddToSelection = true;
             }
 
-            _ItemSelectionStart.X = x + _ContentRectangle.X + HScroll.Value;
-            _ItemSelectionStart.Y = y + _ContentRectangle.Y + VScroll.Value;
+            ItemSelectionStart.X = x + _ContentRectangle.X + HScroll.Value;
+            ItemSelectionStart.Y = y + _ContentRectangle.Y + VScroll.Value;
             // TODO: Remove
             //Console.WriteLine("Select START - {0}", ItemSelectionStart);
         }
@@ -1579,20 +1582,20 @@ namespace InCoding.DList
             int ScrolledX = x + _ContentRectangle.X + HScroll.Value;
             int ScrolledY = y + _ContentRectangle.Y + VScroll.Value;
 
-            if ((Math.Abs(_ItemSelectionStart.X - ScrolledX) >= SystemInformation.DragSize.Width)
-                && (Math.Abs(_ItemSelectionStart.Y - ScrolledY) >= SystemInformation.DragSize.Height))
+            if ((Math.Abs(ItemSelectionStart.X - ScrolledX) >= SystemInformation.DragSize.Width)
+                && (Math.Abs(ItemSelectionStart.Y - ScrolledY) >= SystemInformation.DragSize.Height))
             {
                 if (SelectedItemIndices.Count > 0) SelectedItemIndices.Clear();
                 if (HotItemIndex >= 0) HotItemIndex = -1;
 
-                _ItemSelectionEnd.X = ScrolledX;
-                _ItemSelectionEnd.Y = ScrolledY;
+                ItemSelectionEnd.X = ScrolledX;
+                ItemSelectionEnd.Y = ScrolledY;
             }
 
             // Autoscroll up or down if the selection rectangle is dragged above or beneath the item list.
             if (y >= _ContentRectangle.Bottom || y < (_ContentRectangle.Y + ItemHeight))
             {
-                if (_ItemSelectionEnd.Y > _ItemSelectionStart.Y)
+                if (ItemSelectionEnd.Y > ItemSelectionStart.Y)
                 {
                     int MaxVScroll = VScroll.Maximum - VScroll.LargeChange + 1;
 
@@ -1621,7 +1624,7 @@ namespace InCoding.DList
 
         private void EndSelectionRectangle()
         {
-            if (!_ItemSelectionStart.IsEmpty && !_ItemSelectionEnd.IsEmpty)
+            if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty)
             {
                 bool Invalidated = false;
 
@@ -1630,7 +1633,7 @@ namespace InCoding.DList
                     // TODO: Remove
                     //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
 
-                    var Selection = Utils.GetRectangleFromPoints(_ItemSelectionStart, _ItemSelectionEnd);
+                    var Selection = Utils.GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
 
                     if (Selection.Width >= SystemInformation.DragSize.Width && Selection.Height >= SystemInformation.DragSize.Height)
                     {
@@ -1663,7 +1666,7 @@ namespace InCoding.DList
 
                             for (int i = FirstItemIndex; i <= LastItemIndex; i++)
                             {
-                                if (_AddToSelection)
+                                if (AddToSelection)
                                 {
                                     if (!SelectedItemIndices.Contains(i))
                                     {
@@ -1677,7 +1680,7 @@ namespace InCoding.DList
                             }
 
                             // Focus the last item in the direction the selection rectangle was drawn
-                            FocusedItemIndex = (_ItemSelectionStart.Y < _ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
+                            FocusedItemIndex = (ItemSelectionStart.Y < ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
                             Invalidated = true;
 
                             // TODO: remove
@@ -1687,13 +1690,13 @@ namespace InCoding.DList
                 }
 
                 // Clean up selection rectangle data
-                _ItemSelectionStart = Point.Empty;
-                _ItemSelectionEnd = Point.Empty;
+                ItemSelectionStart = Point.Empty;
+                ItemSelectionEnd = Point.Empty;
 
                 if (!Invalidated) Invalidate();
             }
 
-            _AddToSelection = false;
+            AddToSelection = false;
         }
     }
 }
