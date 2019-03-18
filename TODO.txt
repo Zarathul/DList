@@ -1,5 +1,4 @@
 Things to REMEMBER, THINK about, or to DO
 - Maybe add an internal dictionary to NotifyingCollection for faster containment checks. Also being able to temporarily suspend event firing might be useful (AddRange() ??).
 
-- Color properties for headers and color evaluators for columns
 - Better/fixed designer support.
