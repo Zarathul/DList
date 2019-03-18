@@ -111,6 +111,10 @@ namespace InCoding.DList
                 if (_GridColor != value)
                 {
                     _GridColor = value;
+
+                    _GridPen?.Dispose();
+                    _GridPen = new Pen(value);
+
                     Invalidate();
                 }
             }
@@ -217,7 +221,7 @@ namespace InCoding.DList
 
         [DefaultValue(true)]
         [Category("Layout")]
-        public bool AllowResize { get; set; } = true;
+        public bool AllowColumnResize { get; set; } = true;
 
         [DefaultValue(false)]
         [Category("Layout")]
@@ -981,8 +985,7 @@ namespace InCoding.DList
                 HotItemIndex = GetItemIndexAt(e.X, e.Y);
                 HotHeaderIndex = GetColumnHeaderIndexAt(e.X, e.Y);
 
-                // TODO: Rename this to AllowColumnResize
-                if (AllowResize)
+                if (AllowColumnResize)
                 {
                     // Change the mouse cursor if columns can be resized and the cursor is inside the grip range.
                     if (HotHeaderIndex >= 0)
