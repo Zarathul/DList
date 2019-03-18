@@ -17,7 +17,7 @@ namespace InCoding.DList
         private int _Width = 80;
         private Font _HeaderFont;
         private Font _ItemFont;
-        private IComplexRenderer _CellRenderer = new TextCellRenderer();
+        private IRenderer _CellRenderer = new TextCellRenderer();
         private ICellEditor _CellEditor;
         private ValueGetterFunc _ValueGetter;
         private ValueSetterFunc _ValueSetter;
@@ -62,7 +62,7 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IComplexRenderer CellRenderer
+        public IRenderer CellRenderer
         {
             get => _CellRenderer;
             set => Utils.CheckPropertyChanged(nameof(CellRenderer), ref _CellRenderer, ref value, OnPropertyChanged);

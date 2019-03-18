@@ -4,7 +4,7 @@ using Vs = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
-    public class CheckBoxCellRenderer : VisualStyleRendererBase, IComplexRenderer
+    public class CheckBoxCellRenderer : VisualStyleRendererBase, IRenderer
     {
         public CheckBoxCellRenderer(ContentAlignment alignment = DefaultAlignment)
         {

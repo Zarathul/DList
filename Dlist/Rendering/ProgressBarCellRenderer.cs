@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace InCoding.DList.Rendering
 {
-    public class ProgressBarCellRenderer : VisualStyleRendererBase, IComplexRenderer
+    public class ProgressBarCellRenderer : VisualStyleRendererBase, IRenderer
     {
         public int MinValue { get; set; }
         public int MaxValue { get; set; }

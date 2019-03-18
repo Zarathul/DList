@@ -2,7 +2,7 @@
 
 namespace InCoding.DList.Rendering
 {
-    public interface IComplexRenderer
+    public interface IRenderer
     {
         void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font);
     }

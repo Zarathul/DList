@@ -59,7 +59,7 @@
     <Compile Include="Rendering\CheckBoxCellRenderer.cs" />
     <Compile Include="Rendering\HeaderRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rendering\IComplexRenderer.cs" />
+    <Compile Include="Rendering\IRenderer.cs" />
     <Compile Include="Rendering\ProgressBarCellRenderer.cs" />
     <Compile Include="Rendering\RenderState.cs" />
     <Compile Include="Rendering\TextCellRenderer.cs" />

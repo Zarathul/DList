@@ -44,7 +44,7 @@ namespace InCoding.DList
         private Color _SelectionRectangleColor = SystemColors.HotTrack;
         private Color _SelectionRectangleBorderColor = SystemColors.HotTrack;
         private Font _HeaderFont;
-        private IComplexRenderer _HeaderRenderer = new HeaderRenderer();
+        private IRenderer _HeaderRenderer = new HeaderRenderer();
         private Func<object, (Color, Color)> _ItemColorEvaluator;
         private Pen _GridPen;
         private Pen _SelectionRectanglePen;
@@ -343,7 +343,7 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IComplexRenderer HeaderRenderer
+        public IRenderer HeaderRenderer
         {
             get => _HeaderRenderer;
             set
