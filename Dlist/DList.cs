@@ -1371,6 +1371,22 @@ namespace InCoding.DList
 
         #endregion
 
+        #region Dispose
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!IsDisposed && disposing)
+            {
+                _GridPen?.Dispose();
+                _SelectionRectanglePen?.Dispose();
+                _SelectionRectangleBrush?.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        #endregion
+
         public int GetItemIndexAt(int x, int y)
         {
             if (x < _ContentRectangle.X || x >= _ContentRectangle.Right) return -1;
