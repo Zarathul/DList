@@ -69,52 +69,88 @@ namespace InCoding
                 var Item = TestItem.GenerateRandom(i);
                 dList1.Items.Add(Item);
             }
-        }
 
-        private void ItemCollectionChanged(object sender, NotifyingCollectionChangedEventArgs args)
-        {
-            string Entry = string.Empty;
+            numericUpDownItemIndex.Minimum = 0;
+            numericUpDownItemIndex.Maximum = dList1.Items.Count - 1;
 
-            switch (args.Action)
-            {
-                case NotifyingCollectionChangeAction.Add:
-                    Entry = String.Format("{0} == ADD {1}[{2}]", nameof(ItemCollectionChanged), args.NewItem, args.NewItemIndex);
-                    break;
-                case NotifyingCollectionChangeAction.Remove:
-                    Entry = String.Format("{0} == REMOVE {1}[{2}]", nameof(ItemCollectionChanged), args.OldItem, args.OldItemIndex);
-                    break;
-                case NotifyingCollectionChangeAction.Replace:
-                    Entry = String.Format("{0} == REPLACE {1}[{2}] with {3}[{4}]", nameof(ItemCollectionChanged), args.OldItem, args.OldItemIndex, args.NewItem, args.NewItemIndex);
-                    break;
-                case NotifyingCollectionChangeAction.Clear:
-                    Entry = String.Format("{0} == CLEAR", nameof(ItemCollectionChanged));
-                    break;
-                case NotifyingCollectionChangeAction.Sort:
-                    Entry = String.Format("{0} == SORT", nameof(ItemCollectionChanged));
-                    break;
-                default:
-                    break;
-            }
+            numericUpDownItemIndex2.Minimum = 0;
+            numericUpDownItemIndex2.Maximum = dList1.Items.Count - 1;
 
-            listBoxEvents.Items.Add(Entry);
-        }
+            numericUpDownColumnIndex.Minimum = 0;
+            numericUpDownColumnIndex.Maximum = dList1.Columns.Count - 1;
 
-        private void ItemChanged(object sender, ItemPropertyChangedEventArgs args)
-        {
-            string Entry = String.Format("ItemChanged [{0}] == {1}", args.PropertyName, args.Item);
-            listBoxEvents.Items.Add(Entry);
+            dList1.Items.CollectionChanged += CollectionChangedOrChanging;
+            dList1.Items.CollectionChanging += CollectionChangedOrChanging;
+            dList1.Items.ItemChanged += ItemChanged;
+
+            dList1.Columns.CollectionChanged += CollectionChangedOrChanging;
+            dList1.Columns.CollectionChanging += CollectionChangedOrChanging;
         }
 
         private void buttonAddRngItem_Click(object sender, EventArgs e)
         {
-
+            var NewItem = TestItem.GenerateRandom();
+            dList1.Items.Add(NewItem);
         }
 
         private void buttonRemoveItem_Click(object sender, EventArgs e)
         {
-            if (dList1.Items.Count > 0)
+            if (dList1.AllowMultipleSelectedItems)
             {
-                dList1.Items.RemoveAt(dList1.Items.Count - 1);
+                var Indices = new int[dList1.SelectedItemIndices.Count];
+                dList1.SelectedItemIndices.CopyTo(Indices, 0);
+                dList1.Items.RemoveAt(Indices);
+            }
+            else if (dList1.SelectedItemIndex >= 0)
+            {
+                dList1.Items.RemoveAt(dList1.SelectedItemIndex);
+            }
+        }
+
+        private void buttonSelectItem_Click(object sender, EventArgs e)
+        {
+            if (dList1.Items.Count > 0 && (dList1.Items.Count > numericUpDownItemIndex.Value))
+            {
+                dList1.Select((int)numericUpDownItemIndex.Value, checkBoxAddToSelection.Checked);
+            }
+        }
+
+        private void buttonSelectAll_Click(object sender, EventArgs e)
+        {
+            dList1.SelectAllItems();
+        }
+
+        private void buttonEnsureItemVisibility_Click(object sender, EventArgs e)
+        {
+            dList1.EnsureItemVisibility((int)numericUpDownItemIndex2.Value);
+        }
+
+        private void buttonEnsureColumnVisibility_Click(object sender, EventArgs e)
+        {
+            dList1.EnsureColumnVisibility((int)numericUpDownColumnIndex.Value);
+        }
+
+        private void buttonEnsureCellVisibility_Click(object sender, EventArgs e)
+        {
+            dList1.EnsureCellVisibility((int)numericUpDownColumnIndex.Value, (int)numericUpDownItemIndex2.Value);
+        }
+
+        private void buttonBeginEdit_Click(object sender, EventArgs e)
+        {
+            dList1.BeginCellEdit((int)numericUpDownColumnIndex.Value, (int)numericUpDownItemIndex2.Value);
+        }
+
+        private void buttonCancelEdit_Click(object sender, EventArgs e)
+        {
+            dList1.CancelCellEdit();
+        }
+
+        private void listBoxEvents_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                var LBox = (ListBox)sender;
+                LBox.Items.Clear();
             }
         }
 
@@ -162,13 +198,53 @@ namespace InCoding
             listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
         }
 
-        private void listBoxEvents_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void CollectionChangedOrChanging(object sender, NotifyingCollectionChangedEventArgs args)
         {
-            if (e.Button == MouseButtons.Left)
+            string Entry = string.Empty;
+            bool SourceIsColumns = (sender is NotifyingCollection<Column>);
+            string Source = SourceIsColumns ? "Columns" : "Items";
+            string EventType = (args is NotifyingCollectionChangingEventArgs) ? "CHANGING" : "CHANGED";
+
+            switch (args.Action)
             {
-                var LBox = (ListBox)sender;
-                LBox.Items.Clear();
+                case NotifyingCollectionChangeAction.Add:
+                    Entry = String.Format("{0}[{1}] == ADD {2}[{3}]", Source, EventType, args.NewItem, args.NewItemIndex);
+                    break;
+                case NotifyingCollectionChangeAction.Remove:
+                    Entry = String.Format("{0}[{1}] == REMOVE {2}[{3}]", Source, EventType, args.OldItem, args.OldItemIndex);
+                    break;
+                case NotifyingCollectionChangeAction.Replace:
+                    Entry = String.Format("{0}[{1}] == REPLACE {2}[{3}] with {4}[{5}]", Source, EventType, args.OldItem, args.OldItemIndex, args.NewItem, args.NewItemIndex);
+                    break;
+                case NotifyingCollectionChangeAction.Clear:
+                    Entry = String.Format("{0}[{1}] == CLEAR", Source, EventType);
+                    break;
+                case NotifyingCollectionChangeAction.Sort:
+                    Entry = String.Format("{0}[{1}] == SORT", Source, EventType);
+                    break;
+                default:
+                    break;
             }
+
+            listBoxEvents.Items.Add(Entry);
+            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+
+            if (SourceIsColumns)
+            {
+                numericUpDownColumnIndex.Maximum = dList1.Columns.Count - 1;
+            }
+            else
+            {
+                numericUpDownItemIndex.Maximum = dList1.Items.Count - 1;
+                numericUpDownItemIndex2.Maximum = dList1.Items.Count - 1;
+            }
+        }
+
+        private void ItemChanged(object sender, ItemPropertyChangedEventArgs args)
+        {
+            string Entry = String.Format("ItemChanged [{0}] == {1}", args.PropertyName, args.Item);
+            listBoxEvents.Items.Add(Entry);
+            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
         }
     }
 }

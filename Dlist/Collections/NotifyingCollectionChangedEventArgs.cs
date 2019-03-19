@@ -20,7 +20,7 @@ namespace InCoding.DList.Collections
         public int OldItemIndex { get; }
 
         public NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction action)
-            : this(action, null, 0, null, 0)
+            : this(action, null, -1, null, -1)
         {
         }
 

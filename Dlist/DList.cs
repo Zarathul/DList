@@ -28,6 +28,7 @@ namespace InCoding.DList
     public class DList : Control
     {
         private bool _ShowGrid = true;
+        private bool _IntegralHeight = false;
         private int _ItemHeight = 28;
         private int _ResizeGripWidth = 10;
         private int _FocusedItemIndex = -1;
@@ -51,7 +52,6 @@ namespace InCoding.DList
         private SolidBrush _SelectionRectangleBrush;
         private Rectangle _ContentRectangle;
 
-        private bool AddToSelection = false;
         private bool IsFirstPaint = true;
         private bool IsMouseOnResizeGrip = false;
         private Point ItemSelectionStart = Point.Empty;
@@ -244,7 +244,17 @@ namespace InCoding.DList
 
         [DefaultValue(false)]
         [Category("Layout")]
-        public bool IntegralHeight { get; set; } = false;
+        public bool IntegralHeight
+        {
+            get => _IntegralHeight;
+            set
+            {
+                if (Dock == DockStyle.None)
+                {
+                    _IntegralHeight = value;
+                }
+            }
+        }
 
         [DefaultValue(true)]
         [Category("Behavior")]
@@ -375,6 +385,20 @@ namespace InCoding.DList
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public NotifyingCollection<object> Items { get; } = new NotifyingCollection<object>();
 
+        public override DockStyle Dock
+        {
+            get => base.Dock;
+            set
+            {
+                base.Dock = value;
+
+                if (value != DockStyle.None)
+                {
+                    _IntegralHeight = false;
+                }
+            }
+        }
+
         protected VisualStyleRenderer VsRenderer { get; private set; }
         protected HScrollBar HScroll { get; }
         protected VScrollBar VScroll { get; }
@@ -436,6 +460,7 @@ namespace InCoding.DList
             Items.ItemChanged += ItemChanged;
 
             Columns.CollectionChanged += ColumnCollectionChanged;
+            Columns.CollectionChanging += ColumnCollectionChanging;
             Columns.ItemChanged += ColumnChanged;
 
             SelectedItemIndices.CollectionChanged += SelectedItemIndicesChanged;
@@ -754,8 +779,8 @@ namespace InCoding.DList
                         e.Handled = true;
                     }
                     break;
-
 #if DEBUG
+
                 case Keys.F12:
                     int TotalColumnWidth = 0;
 
@@ -798,9 +823,6 @@ namespace InCoding.DList
                     e.Handled = true;
                     break;
 #endif
-
-                default:
-                    break;
             }
 
             base.OnKeyDown(e);
@@ -1001,7 +1023,7 @@ namespace InCoding.DList
             {
                 int CurrentItemIndex = GetItemIndexAt(e.X, e.Y);
                 int OldFocusedItemIndex = FocusedItemIndex;
-                bool AddToSelection = ModifierKeys.HasFlag(Keys.Shift) && ModifierKeys.HasFlag(Keys.Control);
+                bool AddToSelection = ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control);
                 bool ItemWasClicked = CurrentItemIndex >= 0 && CurrentItemIndex == _PressedItemIndex;
                 bool MultiSelecting = !ItemSelectionEnd.IsEmpty;
 
@@ -1170,8 +1192,10 @@ namespace InCoding.DList
 
         protected void ItemCollectionChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
-            Invalidate();
             CancelCellEdit();
+            Select(-1);
+            _FocusedItemIndex = -1;
+            Invalidate();
         }
 
         protected void ItemChanged(object sender, ItemPropertyChangedEventArgs e)
@@ -1181,7 +1205,6 @@ namespace InCoding.DList
 
         protected void ColumnCollectionChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
-            // TODO: Test if this stuff actually works.
             switch (e.Action)
             {
                 case NotifyingCollectionChangeAction.Add:
@@ -1217,22 +1240,29 @@ namespace InCoding.DList
                     }
 
                     break;
-                case NotifyingCollectionChangeAction.Clear:
-                    var ClearedCollection = (NotifyingCollection<Column>)sender;
-
-                    foreach (var column in ClearedCollection)
-                    {
-                        if (column.CellEditor != null && column.CellEditor.EditorControl != null)
-                        {
-                            Controls.Remove(column.CellEditor.EditorControl);
-                        }
-                    }
-
-                    break;
             }
 
             Invalidate();
             CancelCellEdit();
+        }
+
+        protected void ColumnCollectionChanging(object sender, NotifyingCollectionChangingEventArgs e)
+        {
+            // As a reminder (in case of temporary stupidity), removing the EditorControls has to be 
+            // done here in the "changing" event, rather than in the "changed" event, because the column 
+            // collection is already empty when that event is fired.
+            if (e.Action == NotifyingCollectionChangeAction.Clear)
+            {
+                var ClearedCollection = (NotifyingCollection<Column>)sender;
+
+                foreach (var column in ClearedCollection)
+                {
+                    if (column.CellEditor != null && column.CellEditor.EditorControl != null)
+                    {
+                        Controls.Remove(column.CellEditor.EditorControl);
+                    }
+                }
+            }
         }
 
         protected void ColumnChanged(object sender, ItemPropertyChangedEventArgs e)
@@ -1403,7 +1433,7 @@ namespace InCoding.DList
                 // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
                 int BorderHeight = (_ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight : 0;
 
-                height = (ItemHeight * (int)Math.Round(height / (double)ItemHeight)) + BorderHeight;
+                height = (ItemHeight * (int)Math.Floor(height / (double)ItemHeight)) + BorderHeight;
 
                 if (HScroll.Visible)
                 {
@@ -1628,6 +1658,28 @@ namespace InCoding.DList
             EnsureItemVisibility(itemIndex);
         }
 
+        public void Select(int index, bool add = false)
+        {
+            if (index >= Items.Count) throw new ArgumentOutOfRangeException(nameof(index));
+
+            if (AllowMultipleSelectedItems)
+            {
+                if (!add)
+                {
+                    SelectedItemIndices.Clear();
+                }
+
+                if (index >= 0 && !SelectedItemIndices.Contains(index)) // This way selecting a negative index will clear the selection.
+                {
+                    SelectedItemIndices.Add(index);
+                }
+            }
+            else
+            {
+                SelectedItemIndex = (index < -1) ? -1 : index;
+            }
+        }
+
         public void SelectAllItems()
         {
             if (AllowMultipleSelectedItems)
@@ -1648,18 +1700,20 @@ namespace InCoding.DList
             if (columnIndex < 0 || columnIndex >= Columns.Count) throw new ArgumentOutOfRangeException(nameof(columnIndex));
             if (itemIndex < 0 || itemIndex >= Items.Count) throw new ArgumentOutOfRangeException(nameof(itemIndex));
 
+            if (ActiveCellEditor != null) ActiveCellEditor.Cancel();
+
             var Column = Columns[columnIndex];
 
             if (Column.CanEdit)
             {
-                object Value = Column.GetValue(Items[FocusedItemIndex]);
+                object Value = Column.GetValue(Items[itemIndex]);
                 var Editor = Column.CellEditor;
                 Editor.Done += CellEditorDone;
 
                 ActiveCellEditor = Editor;
 
-                var CellBounds = GetCellBounds(columnIndex, FocusedItemIndex);
-                Editor.Edit(CellBounds, columnIndex, FocusedItemIndex, Value);
+                var CellBounds = GetCellBounds(columnIndex, itemIndex);
+                Editor.Edit(CellBounds, columnIndex, itemIndex, Value);
 
                 // TODO: Remove
                 Console.WriteLine("CellBounds: {0}", CellBounds);
@@ -1676,11 +1730,6 @@ namespace InCoding.DList
 
         private void StartSelectionRectangle(int x, int y)
         {
-            if (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control))
-            {
-                AddToSelection = true;
-            }
-
             ItemSelectionStart.X = x + _ContentRectangle.X + HScroll.Value;
             ItemSelectionStart.Y = y + _ContentRectangle.Y + VScroll.Value;
             // TODO: Remove
@@ -1691,11 +1740,12 @@ namespace InCoding.DList
         {
             int ScrolledX = x + _ContentRectangle.X + HScroll.Value;
             int ScrolledY = y + _ContentRectangle.Y + VScroll.Value;
+            bool AddToSelection = (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control));
 
             if ((Math.Abs(ItemSelectionStart.X - ScrolledX) >= SystemInformation.DragSize.Width)
                 && (Math.Abs(ItemSelectionStart.Y - ScrolledY) >= SystemInformation.DragSize.Height))
             {
-                if (SelectedItemIndices.Count > 0) SelectedItemIndices.Clear();
+                if (!AddToSelection) SelectedItemIndices.Clear();
                 if (HotItemIndex >= 0) HotItemIndex = -1;
 
                 ItemSelectionEnd.X = ScrolledX;
@@ -1773,6 +1823,9 @@ namespace InCoding.DList
                         {
                             int FirstItemIndex = Math.Max(0, (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight));
                             int LastItemIndex = Math.Min(Items.Count - 1, (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight));
+                            bool AddToSelection = (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control));
+
+                            if (!AddToSelection) SelectedItemIndices.Clear();
 
                             for (int i = FirstItemIndex; i <= LastItemIndex; i++)
                             {
@@ -1805,8 +1858,6 @@ namespace InCoding.DList
 
                 if (!Invalidated) Invalidate();
             }
-
-            AddToSelection = false;
         }
     }
 }

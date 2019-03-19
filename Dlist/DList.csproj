@@ -45,6 +45,7 @@
     <Compile Include="Collections\ItemPropertyChangedEventArgs.cs" />
     <Compile Include="Collections\NotifyingCollection.cs" />
     <Compile Include="Collections\NotifyingCollectionChangedEventArgs.cs" />
+    <Compile Include="Collections\NotifyingCollectionChangingEventArgs.cs" />
     <Compile Include="Column.cs" />
     <Compile Include="DList.cs">
       <SubType>Component</SubType>
