@@ -562,7 +562,8 @@ namespace InCoding.DList
                     {
                         // SPEED: The ItemColorEvaluator is invoked for every cell if there is no CellColorEvaluator. Since drawing 
                         // is done column by column instead of item by item, the only way to get around this would be to cache the 
-                        // ItemColorEvaluator results, which might not be worth it.
+                        // ItemColorEvaluator results. This is not worth it unless the ItemColorEvaluator is very complex, which it
+                        // should not be to begin with.
                         (Color Fore, Color Back) = GetCellColors(column, Item, CellValue);
 
                         if (ForegroundColor.IsEmpty) ForegroundColor = Fore;
