@@ -4,7 +4,7 @@ using Styles = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
-    public class HeaderRenderer : VisualStyleRendererBase, IRenderer
+    public class HeaderRenderer : CellRendererBase, IRenderer
     {
         public HeaderRenderer(ContentAlignment alignment = DefaultAlignment) : base(
             new Styles.VisualStyleElement[] {

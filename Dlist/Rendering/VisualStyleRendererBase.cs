@@ -6,7 +6,7 @@ using Styles = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
-    public abstract class VisualStyleRendererBase : IDisposable
+    public abstract class CellRendererBase : IDisposable
     {
         protected const TextFormatFlags BaseTextFlags = TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.EndEllipsis;
         protected const ContentAlignment DefaultAlignment = ContentAlignment.MiddleCenter;
@@ -28,19 +28,19 @@ namespace InCoding.DList.Rendering
         public TextFormatFlags TextFlags { get; private set; }
         public Styles.VisualStyleRenderer VsRenderer { get; private set; }
 
-        public VisualStyleRendererBase() : this(null, DefaultAlignment)
+        public CellRendererBase() : this(null, DefaultAlignment)
         {
         }
 
-        public VisualStyleRendererBase(ContentAlignment alignment) : this(null, alignment)
+        public CellRendererBase(ContentAlignment alignment) : this(null, alignment)
         {
         }
 
-        public VisualStyleRendererBase(IEnumerable<Styles.VisualStyleElement> requiredStyleElements) : this(requiredStyleElements, DefaultAlignment)
+        public CellRendererBase(IEnumerable<Styles.VisualStyleElement> requiredStyleElements) : this(requiredStyleElements, DefaultAlignment)
         {
         }
 
-        public VisualStyleRendererBase(IEnumerable<Styles.VisualStyleElement> requiredStyleElements, ContentAlignment alignment)
+        public CellRendererBase(IEnumerable<Styles.VisualStyleElement> requiredStyleElements, ContentAlignment alignment)
         {
             Alignment = alignment;
 

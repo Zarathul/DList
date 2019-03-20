@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace InCoding.DList.Rendering
 {
-    public class TextCellRenderer : VisualStyleRendererBase, IRenderer
+    public class TextCellRenderer : CellRendererBase, IRenderer
     {
         public string Format { get; set; }
 
