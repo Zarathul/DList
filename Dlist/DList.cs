@@ -689,8 +689,6 @@ namespace InCoding.DList
             var SelectionRectangle = Utils.GetRectangleFromPoints(start, end);
             SelectionRectangle.Offset(-HScroll.Value, -VScroll.Value);
 
-            // TODO: remove
-            //Console.WriteLine("Select DRAW - {0}", SelectionRectangle);
             gfx.FillRectangle(SelectionRectangleBrush, SelectionRectangle);
             gfx.DrawRectangle(SelectionRectanglePen, SelectionRectangle.ToGDI());
         }
@@ -955,9 +953,6 @@ namespace InCoding.DList
             if (HScroll.Value > HScroll.Minimum)
             {
                 HScroll.Value -= (HScroll.SmallChange > HScroll.Value) ? HScroll.Value : HScroll.SmallChange;
-
-                // TODO: remove
-                //Console.WriteLine("Left: {0}", HScroll);
             }
         }
 
@@ -971,9 +966,6 @@ namespace InCoding.DList
             {
                 int RemainingHScrollSpace = MaxHScrollValue - HScroll.Value;
                 HScroll.Value += (HScroll.SmallChange > RemainingHScrollSpace) ? RemainingHScrollSpace : HScroll.SmallChange;
-
-                // TODO: remove
-                //Console.WriteLine("Right: {0}, Max: {1}, Remainder: {2}", HScroll, MaxHScrollValue, RemainingHScrollSpace);
             }
         }
 
@@ -985,9 +977,6 @@ namespace InCoding.DList
         {
             if (e.Button == MouseButtons.Left)
             {
-                // TODO: remove
-                Console.WriteLine("Mouse DOWN - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
-
                 Focus();
 
                 if (HotHeaderIndex >= 0 && !DoColumnResizeOnLeftMouseDown)
@@ -1014,9 +1003,6 @@ namespace InCoding.DList
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
-            // TODO: remove
-            Console.WriteLine("Mouse UP - Button: {0}, Clicks: {1}, WheelDelta: {2}, Pos: {3}", e.Button, e.Clicks, e.Delta, e.Location);
-
             // This is a necessary precaution for edit controls with strange focus behavior like DateTimePicker.
             if (ActiveCellEditor != null)
             {
@@ -1118,9 +1104,6 @@ namespace InCoding.DList
                         int ScrolledMouseX = e.X + HScroll.Value;
                         int GripStart = RightColumnEdge - ResizeGripWidth;
 
-                        // TODO: Remove
-                        //Console.WriteLine("Lim: {0}, Right {2}, SX: {1}", GripStart, ScrolledMouseX, RightColumnEdge);
-
                         if (ScrolledMouseX >= GripStart && ScrolledMouseX <= RightColumnEdge)
                         {
                             Cursor = Cursors.VSplit;
@@ -1138,8 +1121,6 @@ namespace InCoding.DList
                         DoColumnResizeOnLeftMouseDown = false;
                     }
                 }
-                // TODO: remove
-                //Console.WriteLine("HotItem: {0}, HotColumn {1}, Col {2}", HotItemIndex, HotColumnIndex, GetColumnIndexAt(e.X));
             }
             else if (e.Button == MouseButtons.Left)
             {
@@ -1194,9 +1175,6 @@ namespace InCoding.DList
                 int NewScrollValue = VScroll.Value - ScrollDelta;
 
                 VScroll.Value = NewScrollValue.Clamp(VScroll.Minimum, VScroll.Maximum - VScroll.LargeChange + 1);
-
-                // TODO: Remove
-                //Console.WriteLine("Old: {0} New: {1}", VScroll.Value, NewScrollValue);
             }
 
             base.OnMouseWheel(e);
@@ -1306,10 +1284,6 @@ namespace InCoding.DList
         {
             Invalidate();
             CancelCellEdit();
-
-            // TODO: Remove
-            //ScrollBar SBar = (ScrollBar)sender;
-            //Console.WriteLine("{0}, LC: {1}", SBar, SBar.LargeChange);
         }
 
         protected void UpdateScrollBars()
@@ -1437,8 +1411,6 @@ namespace InCoding.DList
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
             CancelCellEdit();
-            // TODO: Remove
-            //Console.WriteLine("SetBoundsCoreStart: x{0}, y{1}, w{2}, h{3}", x, y, width, height);
 
             // This prevents the control from being resized when minimized, which would mess up the integral height calculation.
             if (specified == BoundsSpecified.None && height == 0 && width == 0) return;
@@ -1456,9 +1428,6 @@ namespace InCoding.DList
                     height += HScroll.Height + 2;
                 }
             }
-
-            // TODO: remove
-            //Console.WriteLine("SetBoundsCoreEnd: x{0}, y{1}, w{2}, h{3} - Crect: {4}", x, y, width, height, ContentRectangle);
 
             base.SetBoundsCore(x, y, width, height, specified);
         }
@@ -1488,9 +1457,6 @@ namespace InCoding.DList
             ActiveCellEditor = null;
 
             Focus();
-
-            // TODO: Remove
-            Console.WriteLine("EditDone - success: {0}, value: {1}", e.Success, e.NewValue);
         }
 
         private (Color, Color) GetCellColors(Column column, object item, object cellValue)
@@ -1730,9 +1696,6 @@ namespace InCoding.DList
 
                 var CellBounds = GetCellBounds(columnIndex, itemIndex);
                 Editor.Edit(CellBounds, columnIndex, itemIndex, Value);
-
-                // TODO: Remove
-                Console.WriteLine("CellBounds: {0}", CellBounds);
             }
         }
 
@@ -1748,8 +1711,6 @@ namespace InCoding.DList
         {
             ItemSelectionStart.X = x + _ContentRectangle.X + HScroll.Value;
             ItemSelectionStart.Y = y + _ContentRectangle.Y + VScroll.Value;
-            // TODO: Remove
-            //Console.WriteLine("Select START - {0}", ItemSelectionStart);
         }
 
         private void UpdateSelectionRectangle(int x, int y)
@@ -1793,9 +1754,6 @@ namespace InCoding.DList
                 // If we don't scroll we need to invalidate manually to draw the selection rectangle.
                 Invalidate();
             }
-
-            // TODO: Remove
-            //Console.WriteLine("Select UPDATE - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
         }
 
         private void EndSelectionRectangle()
@@ -1806,9 +1764,6 @@ namespace InCoding.DList
 
                 if (Columns.Count > 0 && Items.Count > 0)
                 {
-                    // TODO: Remove
-                    //Console.WriteLine("Select END - {0} -> {1}", ItemSelectionStart, ItemSelectionEnd);
-
                     var Selection = Utils.GetRectangleFromPoints(ItemSelectionStart, ItemSelectionEnd);
 
                     if (Selection.Width >= SystemInformation.DragSize.Width && Selection.Height >= SystemInformation.DragSize.Height)
@@ -1861,9 +1816,6 @@ namespace InCoding.DList
                             // Focus the last item in the direction the selection rectangle was drawn
                             FocusedItemIndex = (ItemSelectionStart.Y < ItemSelectionEnd.Y) ? LastItemIndex : FirstItemIndex;
                             Invalidated = true;
-
-                            // TODO: remove
-                            //Console.WriteLine("Select INDICES - {0} -> {1}", FirstItemIndex, LastItemIndex);
                         }
                     }
                 }
