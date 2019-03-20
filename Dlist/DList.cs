@@ -1311,11 +1311,6 @@ namespace InCoding.DList
                 VScroll.Minimum = 0;
                 VScroll.SmallChange = ItemHeight;
 
-                if (VScroll.Value + VScroll.LargeChange - 1 > VScroll.Maximum)
-                {
-                    VScroll.Value = VScroll.Maximum - VScroll.LargeChange;
-                }
-
                 VScroll.Visible = true;
                 VScroll.Update();
 
@@ -1343,11 +1338,6 @@ namespace InCoding.DList
                 HScroll.Top = _ContentRectangle.Bottom - 1 - HScroll.Height;
                 HScroll.Minimum = 0;
 
-                if (HScroll.Value + HScroll.LargeChange - 1 > HScroll.Maximum)
-                {
-                    HScroll.Value = HScroll.Maximum - HScroll.LargeChange;
-                }
-
                 HScroll.Visible = true;
                 HScroll.Update();
 
@@ -1370,6 +1360,16 @@ namespace InCoding.DList
             HScroll.Maximum = TotalContentWidth - 1;
             HScroll.LargeChange = Math.Max(0, _ContentRectangle.Width);
             HScroll.SmallChange = HScroll.LargeChange / 10;
+
+            if (VScroll.Value > (VScroll.Maximum - VScroll.LargeChange + 1))
+            {
+                VScroll.Value = VScroll.Maximum - VScroll.LargeChange + 1;
+            }
+
+            if (HScroll.Value > (HScroll.Maximum - HScroll.LargeChange + 1))
+            {
+                HScroll.Value = HScroll.Maximum - HScroll.LargeChange + 1;
+            }
         }
         
         public void ScrollPageUp()

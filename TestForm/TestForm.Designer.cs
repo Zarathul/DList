@@ -103,11 +103,16 @@
             this.buttonSelectAll.TabIndex = 4;
             this.buttonSelectAll.Text = "Select all items";
             this.buttonSelectAll.UseVisualStyleBackColor = true;
-            this.buttonSelectAll.Click += new System.EventHandler(this.buttonSelectAll_Click);
+            this.buttonSelectAll.Click += new System.EventHandler(this.ButtonSelectAllClick);
             // 
             // numericUpDownItemIndex
             // 
             this.numericUpDownItemIndex.Location = new System.Drawing.Point(124, 45);
+            this.numericUpDownItemIndex.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
             this.numericUpDownItemIndex.Name = "numericUpDownItemIndex";
             this.numericUpDownItemIndex.Size = new System.Drawing.Size(59, 20);
             this.numericUpDownItemIndex.TabIndex = 3;
@@ -120,7 +125,7 @@
             this.buttonSelectItem.TabIndex = 2;
             this.buttonSelectItem.Text = "Select item";
             this.buttonSelectItem.UseVisualStyleBackColor = true;
-            this.buttonSelectItem.Click += new System.EventHandler(this.buttonSelectItem_Click);
+            this.buttonSelectItem.Click += new System.EventHandler(this.ButtonSelectItemClick);
             // 
             // buttonAddRngItem
             // 
@@ -130,17 +135,17 @@
             this.buttonAddRngItem.TabIndex = 0;
             this.buttonAddRngItem.Text = "Add random";
             this.buttonAddRngItem.UseVisualStyleBackColor = true;
-            this.buttonAddRngItem.Click += new System.EventHandler(this.buttonAddRngItem_Click);
+            this.buttonAddRngItem.Click += new System.EventHandler(this.ButtonAddRngItemClick);
             // 
             // buttonRemoveItem
             // 
-            this.buttonRemoveItem.Location = new System.Drawing.Point(124, 19);
+            this.buttonRemoveItem.Location = new System.Drawing.Point(124, 71);
             this.buttonRemoveItem.Name = "buttonRemoveItem";
             this.buttonRemoveItem.Size = new System.Drawing.Size(112, 20);
             this.buttonRemoveItem.TabIndex = 1;
             this.buttonRemoveItem.Text = "Remove selected";
             this.buttonRemoveItem.UseVisualStyleBackColor = true;
-            this.buttonRemoveItem.Click += new System.EventHandler(this.buttonRemoveItem_Click);
+            this.buttonRemoveItem.Click += new System.EventHandler(this.ButtonRemoveItemClick);
             // 
             // groupBoxEvents
             // 
@@ -166,7 +171,7 @@
             this.listBoxEvents.Name = "listBoxEvents";
             this.listBoxEvents.Size = new System.Drawing.Size(323, 186);
             this.listBoxEvents.TabIndex = 0;
-            this.listBoxEvents.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listBoxEvents_MouseDoubleClick);
+            this.listBoxEvents.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListBoxEventsMouseDoubleClick);
             // 
             // splitContainer1
             // 
@@ -237,7 +242,7 @@
             this.buttonCancelEdit.TabIndex = 8;
             this.buttonCancelEdit.Text = "Cancel edit";
             this.buttonCancelEdit.UseVisualStyleBackColor = true;
-            this.buttonCancelEdit.Click += new System.EventHandler(this.buttonCancelEdit_Click);
+            this.buttonCancelEdit.Click += new System.EventHandler(this.ButtonCancelEditClick);
             // 
             // buttonBeginEdit
             // 
@@ -247,7 +252,7 @@
             this.buttonBeginEdit.TabIndex = 7;
             this.buttonBeginEdit.Text = "Begin edit";
             this.buttonBeginEdit.UseVisualStyleBackColor = true;
-            this.buttonBeginEdit.Click += new System.EventHandler(this.buttonBeginEdit_Click);
+            this.buttonBeginEdit.Click += new System.EventHandler(this.ButtonBeginEditClick);
             // 
             // buttonEnsureCellVisibility
             // 
@@ -257,7 +262,7 @@
             this.buttonEnsureCellVisibility.TabIndex = 6;
             this.buttonEnsureCellVisibility.Text = "Ensure cell visibility";
             this.buttonEnsureCellVisibility.UseVisualStyleBackColor = true;
-            this.buttonEnsureCellVisibility.Click += new System.EventHandler(this.buttonEnsureCellVisibility_Click);
+            this.buttonEnsureCellVisibility.Click += new System.EventHandler(this.ButtonEnsureCellVisibilityClick);
             // 
             // buttonEnsureColumnVisibility
             // 
@@ -267,7 +272,7 @@
             this.buttonEnsureColumnVisibility.TabIndex = 5;
             this.buttonEnsureColumnVisibility.Text = "Ensure column visibility";
             this.buttonEnsureColumnVisibility.UseVisualStyleBackColor = true;
-            this.buttonEnsureColumnVisibility.Click += new System.EventHandler(this.buttonEnsureColumnVisibility_Click);
+            this.buttonEnsureColumnVisibility.Click += new System.EventHandler(this.ButtonEnsureColumnVisibilityClick);
             // 
             // buttonEnsureItemVisibility
             // 
@@ -277,12 +282,12 @@
             this.buttonEnsureItemVisibility.TabIndex = 4;
             this.buttonEnsureItemVisibility.Text = "Ensure item visibility";
             this.buttonEnsureItemVisibility.UseVisualStyleBackColor = true;
-            this.buttonEnsureItemVisibility.Click += new System.EventHandler(this.buttonEnsureItemVisibility_Click);
+            this.buttonEnsureItemVisibility.Click += new System.EventHandler(this.ButtonEnsureItemVisibilityClick);
             // 
             // label2
             // 
             this.label2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.label2.Location = new System.Drawing.Point(8, 45);
+            this.label2.Location = new System.Drawing.Point(8, 19);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(72, 20);
             this.label2.TabIndex = 3;
@@ -292,7 +297,7 @@
             // label1
             // 
             this.label1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.label1.Location = new System.Drawing.Point(9, 19);
+            this.label1.Location = new System.Drawing.Point(9, 45);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(72, 20);
             this.label1.TabIndex = 2;
@@ -301,14 +306,24 @@
             // 
             // numericUpDownItemIndex2
             // 
-            this.numericUpDownItemIndex2.Location = new System.Drawing.Point(87, 45);
+            this.numericUpDownItemIndex2.Location = new System.Drawing.Point(87, 19);
+            this.numericUpDownItemIndex2.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
             this.numericUpDownItemIndex2.Name = "numericUpDownItemIndex2";
             this.numericUpDownItemIndex2.Size = new System.Drawing.Size(64, 20);
             this.numericUpDownItemIndex2.TabIndex = 1;
             // 
             // numericUpDownColumnIndex
             // 
-            this.numericUpDownColumnIndex.Location = new System.Drawing.Point(87, 19);
+            this.numericUpDownColumnIndex.Location = new System.Drawing.Point(87, 45);
+            this.numericUpDownColumnIndex.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
             this.numericUpDownColumnIndex.Name = "numericUpDownColumnIndex";
             this.numericUpDownColumnIndex.Size = new System.Drawing.Size(64, 20);
             this.numericUpDownColumnIndex.TabIndex = 0;
@@ -343,9 +358,9 @@
             this.dList1.Size = new System.Drawing.Size(606, 644);
             this.dList1.TabIndex = 3;
             this.dList1.Text = "dList1";
-            this.dList1.HeaderClicked += new System.EventHandler<InCoding.DList.HeaderClickEventArgs>(this.dList1_HeaderClicked);
-            this.dList1.CellClicked += new System.EventHandler<InCoding.DList.CellClickEventArgs>(this.dList1_CellClicked);
-            this.dList1.SelectedItemsChanged += new System.EventHandler(this.dList1_SelectedItemsChanged);
+            this.dList1.HeaderClicked += new System.EventHandler<InCoding.DList.HeaderClickEventArgs>(this.DList1HeaderClicked);
+            this.dList1.CellClicked += new System.EventHandler<InCoding.DList.CellClickEventArgs>(this.DList1CellClicked);
+            this.dList1.SelectedItemsChanged += new System.EventHandler(this.DList1SelectedItemsChanged);
             // 
             // TestForm
             // 

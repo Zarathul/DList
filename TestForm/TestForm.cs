@@ -17,30 +17,39 @@ namespace InCoding
             InitializeComponent();
 
             // Columns
-            var Column1 = new Column("String");
-            Column1.ValueGetter = (item) => ((TestItem)item).Name;
-            Column1.ValueSetter = (item, value) => ((TestItem)item).Name = value.ToString();
-            Column1.CellEditor = new TextCellEditor();
-            Column1.Width = 215;
-            Column1.HeaderFont = new Font(dList1.HeaderFont, FontStyle.Bold | FontStyle.Italic);
-            Column1.ItemFont = new Font(dList1.Font, FontStyle.Italic);
+            var Column1 = new Column("String")
+            {
+                ValueGetter = (item) => ((TestItem)item).Name,
+                ValueSetter = (item, value) => ((TestItem)item).Name = value.ToString(),
+                CellEditor = new TextCellEditor(),
+                Width = 215,
+                HeaderFont = new Font(dList1.HeaderFont, FontStyle.Bold | FontStyle.Italic),
+                ItemFont = new Font(dList1.Font, FontStyle.Italic)
+            };
 
-            var Column2 = new Column("Numeric");
-            Column2.ValueGetter = (item) => ((TestItem)item).NumericValue;
-            Column2.CellRenderer = new ProgressBarCellRenderer(0, 100);
+            var Column2 = new Column("Numeric")
+            {
+                ValueGetter = (item) => ((TestItem)item).NumericValue,
+                CellRenderer = new ProgressBarCellRenderer(0, 100)
+            };
 
-            var Column3 = new Column("Boolean");
-            Column3.Width = 150;
-            Column3.ValueGetter = (item) => ((TestItem)item).Flag;
-            Column3.ValueSetter = (item, value) => ((TestItem)item).Flag = (bool)value;
-            Column3.CellRenderer = new CheckBoxCellRenderer();
-            Column3.CellEditor = new BooleanCellEditor();
-            Column3.CellColorEvaluator = (value) => ((bool)value) ? (Color.Black, Color.Green) : (Color.Black, Color.Red);
+            var Column3 = new Column("Boolean")
+            {
+                Width = 150,
+                ValueGetter = (item) => ((TestItem)item).Flag,
+                ValueSetter = (item, value) => ((TestItem)item).Flag = (bool)value,
+                CellRenderer = new CheckBoxCellRenderer(),
+                CellEditor = new BooleanCellEditor(),
+                CellColorEvaluator = (value) => ((bool)value) ? (Color.Black, Color.Green) : (Color.Black, Color.Red)
+            };
 
-            var Column4 = new Column("DateTime");
-            Column4.ValueGetter = (item) => ((TestItem)item).Date;
-            Column4.ValueSetter = (item, value) => ((TestItem)item).Date = (DateTime)value;
-            Column4.CellEditor = new DateTimeCellEditor();
+            var Column4 = new Column("DateTime")
+            {
+                ValueGetter = (item) => ((TestItem)item).Date,
+                ValueSetter = (item, value) => ((TestItem)item).Date = (DateTime)value,
+                CellEditor = new DateTimeCellEditor()
+            };
+
             var Temp = (TextCellRenderer)Column4.CellRenderer;
             Temp.Format = "{0:F}";
 
@@ -70,13 +79,8 @@ namespace InCoding
                 dList1.Items.Add(Item);
             }
 
-            numericUpDownItemIndex.Minimum = 0;
             numericUpDownItemIndex.Maximum = dList1.Items.Count - 1;
-
-            numericUpDownItemIndex2.Minimum = 0;
             numericUpDownItemIndex2.Maximum = dList1.Items.Count - 1;
-
-            numericUpDownColumnIndex.Minimum = 0;
             numericUpDownColumnIndex.Maximum = dList1.Columns.Count - 1;
 
             dList1.Items.CollectionChanged += CollectionChangedOrChanging;
@@ -87,13 +91,13 @@ namespace InCoding
             dList1.Columns.CollectionChanging += CollectionChangedOrChanging;
         }
 
-        private void buttonAddRngItem_Click(object sender, EventArgs e)
+        private void ButtonAddRngItemClick(object sender, EventArgs e)
         {
             var NewItem = TestItem.GenerateRandom();
             dList1.Items.Add(NewItem);
         }
 
-        private void buttonRemoveItem_Click(object sender, EventArgs e)
+        private void ButtonRemoveItemClick(object sender, EventArgs e)
         {
             if (dList1.AllowMultipleSelectedItems)
             {
@@ -107,7 +111,7 @@ namespace InCoding
             }
         }
 
-        private void buttonSelectItem_Click(object sender, EventArgs e)
+        private void ButtonSelectItemClick(object sender, EventArgs e)
         {
             if (dList1.Items.Count > 0 && (dList1.Items.Count > numericUpDownItemIndex.Value))
             {
@@ -115,37 +119,37 @@ namespace InCoding
             }
         }
 
-        private void buttonSelectAll_Click(object sender, EventArgs e)
+        private void ButtonSelectAllClick(object sender, EventArgs e)
         {
             dList1.SelectAllItems();
         }
 
-        private void buttonEnsureItemVisibility_Click(object sender, EventArgs e)
+        private void ButtonEnsureItemVisibilityClick(object sender, EventArgs e)
         {
             dList1.EnsureItemVisibility((int)numericUpDownItemIndex2.Value);
         }
 
-        private void buttonEnsureColumnVisibility_Click(object sender, EventArgs e)
+        private void ButtonEnsureColumnVisibilityClick(object sender, EventArgs e)
         {
             dList1.EnsureColumnVisibility((int)numericUpDownColumnIndex.Value);
         }
 
-        private void buttonEnsureCellVisibility_Click(object sender, EventArgs e)
+        private void ButtonEnsureCellVisibilityClick(object sender, EventArgs e)
         {
             dList1.EnsureCellVisibility((int)numericUpDownColumnIndex.Value, (int)numericUpDownItemIndex2.Value);
         }
 
-        private void buttonBeginEdit_Click(object sender, EventArgs e)
+        private void ButtonBeginEditClick(object sender, EventArgs e)
         {
             dList1.BeginCellEdit((int)numericUpDownColumnIndex.Value, (int)numericUpDownItemIndex2.Value);
         }
 
-        private void buttonCancelEdit_Click(object sender, EventArgs e)
+        private void ButtonCancelEditClick(object sender, EventArgs e)
         {
             dList1.CancelCellEdit();
         }
 
-        private void listBoxEvents_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void ListBoxEventsMouseDoubleClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
@@ -154,21 +158,21 @@ namespace InCoding
             }
         }
 
-        private void dList1_CellClicked(object sender, CellClickEventArgs e)
+        private void DList1CellClicked(object sender, CellClickEventArgs e)
         {
             string Entry = String.Format("CellClicked >> ColumnIndex: {0}, ItemIndex: {1}", e.ColumnIndex, e.ItemIndex);
             listBoxEvents.Items.Add(Entry);
             listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
         }
 
-        private void dList1_HeaderClicked(object sender, HeaderClickEventArgs e)
+        private void DList1HeaderClicked(object sender, HeaderClickEventArgs e)
         {
             string Entry = String.Format("HeaderClicked >> ColumnIndex: {0}", e.Index);
             listBoxEvents.Items.Add(Entry);
             listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
         }
 
-        private void dList1_SelectedItemsChanged(object sender, EventArgs e)
+        private void DList1SelectedItemsChanged(object sender, EventArgs e)
         {
             var ItemIndices = new StringBuilder();
 
