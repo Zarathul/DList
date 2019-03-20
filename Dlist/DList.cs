@@ -53,7 +53,7 @@ namespace InCoding.DList
         private Rectangle _ContentRectangle;
 
         private bool IsFirstPaint = true;
-        private bool IsMouseOnResizeGrip = false;
+        private bool DoColumnResizeOnLeftMouseDown = false;
         private Point ItemSelectionStart = Point.Empty;
         private Point ItemSelectionEnd = Point.Empty;
         private ICellEditor ActiveCellEditor;
@@ -974,7 +974,7 @@ namespace InCoding.DList
 
                 Focus();
 
-                if (HotHeaderIndex >= 0 && !IsMouseOnResizeGrip)
+                if (HotHeaderIndex >= 0 && !DoColumnResizeOnLeftMouseDown)
                 {
                     PressedHeaderIndex = HotHeaderIndex;
                     HotHeaderIndex = -1;
@@ -1108,18 +1108,18 @@ namespace InCoding.DList
                         if (ScrolledMouseX >= GripStart && ScrolledMouseX <= RightColumnEdge)
                         {
                             Cursor = Cursors.VSplit;
-                            IsMouseOnResizeGrip = true;
+                            DoColumnResizeOnLeftMouseDown = true;
                         }
                         else
                         {
                             Cursor = Cursors.Default;
-                            IsMouseOnResizeGrip = false;
+                            DoColumnResizeOnLeftMouseDown = false;
                         }
                     }
                     else
                     {
                         Cursor = Cursors.Default;
-                        IsMouseOnResizeGrip = false;
+                        DoColumnResizeOnLeftMouseDown = false;
                     }
                 }
                 // TODO: remove
@@ -1128,7 +1128,7 @@ namespace InCoding.DList
             else if (e.Button == MouseButtons.Left)
             {
                 // Resize the hot column.
-                if (IsMouseOnResizeGrip)
+                if (DoColumnResizeOnLeftMouseDown)
                 {
                     int RightColumnEdge = _ContentRectangle.X;
 
@@ -1150,7 +1150,7 @@ namespace InCoding.DList
                         ResizingColumn.Width = NewColumnWidth;
                     }
                 }
-                else
+                else if (_PressedHeaderIndex == -1) // Don't update the selection rectangle if a header if currently pressed.
                 {
                     if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
                     {
