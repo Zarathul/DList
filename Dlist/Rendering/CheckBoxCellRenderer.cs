@@ -16,7 +16,7 @@
 
 using System.Drawing;
 using System.Windows.Forms;
-using Vs = System.Windows.Forms.VisualStyles;
+using Styles = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
@@ -32,7 +32,7 @@ namespace InCoding.DList.Rendering
             gfx.FillRectangle(BackgroundBrush, bounds);
 
             bool Checked = (bool)value;
-            var CheckBoxDrawState = (Checked) ? Vs.CheckBoxState.CheckedNormal : Vs.CheckBoxState.UncheckedNormal;
+            var CheckBoxDrawState = (Checked) ? Styles.CheckBoxState.CheckedNormal : Styles.CheckBoxState.UncheckedNormal;
             var CheckBoxSize = CheckBoxRenderer.GetGlyphSize(gfx, CheckBoxDrawState);
 
             var AlignedCheckboxRectangle = Utils.AlignInRectangle(bounds, CheckBoxSize, Alignment);
