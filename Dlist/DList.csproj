@@ -55,6 +55,7 @@
     <Compile Include="Editing\ICellEditor.cs" />
     <Compile Include="Editing\TextCellEditor.cs" />
     <Compile Include="HeaderClickEventArgs.cs" />
+    <Compile Include="Rendering\CellRendererBase.cs" />
     <Compile Include="Rendering\CheckBoxCellRenderer.cs" />
     <Compile Include="Rendering\HeaderRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -62,11 +63,8 @@
     <Compile Include="Rendering\ProgressBarCellRenderer.cs" />
     <Compile Include="Rendering\RenderState.cs" />
     <Compile Include="Rendering\TextCellRenderer.cs" />
-    <Compile Include="Rendering\VisualStyleRendererBase.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Design\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
