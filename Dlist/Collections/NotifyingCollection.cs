@@ -9,6 +9,7 @@ namespace InCoding.DList.Collections
     public class NotifyingCollection<T> : Collection<T>
     {
         private List<T> _ItemList;
+        private HashSet<T> _Set;
 
         public event EventHandler<NotifyingCollectionChangedEventArgs> CollectionChanged;
         public event EventHandler<NotifyingCollectionChangingEventArgs> CollectionChanging;
@@ -21,6 +22,7 @@ namespace InCoding.DList.Collections
         public NotifyingCollection(List<T> list) : base(list)
         {
             _ItemList = list;
+            _Set = new HashSet<T>(list);
         }
 
         public void AddRange(IEnumerable<T> items)
@@ -58,6 +60,13 @@ namespace InCoding.DList.Collections
             OnCollectionChanged(Args);
         }
 
+        public new bool Contains(T item)
+        {
+            if (item == null) return false;
+
+            return _Set.Contains(item);
+        }
+
         protected override void ClearItems()
         {
             if (Items.Count == 0) return;
@@ -69,14 +78,13 @@ namespace InCoding.DList.Collections
 
             foreach (var item in Items)
             {
-                var Iface = item as INotifyPropertyChanged;
-
-                if (Iface != null)
+                if (item is INotifyPropertyChanged Iface)
                 {
                     Iface.PropertyChanged -= HandleItemNotification;
                 }
             }
 
+            _Set.Clear();
             base.ClearItems();
 
             var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Clear);
@@ -90,17 +98,18 @@ namespace InCoding.DList.Collections
 
             if (ChangingArgs.Cancel) return;
 
-            base.InsertItem(index, item);
-
-            var Iface = item as INotifyPropertyChanged;
-
-            if (Iface != null)
+            if (_Set.Add(item))
             {
-                Iface.PropertyChanged += HandleItemNotification;
-            }
+                base.InsertItem(index, item);
 
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, -1);
-            OnCollectionChanged(Args);
+                if (item is INotifyPropertyChanged Iface)
+                {
+                    Iface.PropertyChanged += HandleItemNotification;
+                }
+
+                NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, -1);
+                OnCollectionChanged(Args);
+            }
         }
 
         protected override void RemoveItem(int index)
@@ -111,11 +120,10 @@ namespace InCoding.DList.Collections
 
             if (ChangingArgs.Cancel) return;
 
+            _Set.Remove(Item);
             base.RemoveItem(index);
 
-            var Iface = Item as INotifyPropertyChanged;
-
-            if (Iface != null)
+            if (Item is INotifyPropertyChanged Iface)
             {
                 Iface.PropertyChanged -= HandleItemNotification;
             }
@@ -132,24 +140,24 @@ namespace InCoding.DList.Collections
 
             if (ChangingArgs.Cancel) return;
 
-            base.SetItem(index, item);
-
-            var OldIface = OldItem as INotifyPropertyChanged;
-
-            if (OldIface != null)
+            if (_Set.Add(item))
             {
-                OldIface.PropertyChanged -= HandleItemNotification;
+                _Set.Remove(OldItem);
+                base.SetItem(index, item);
+
+                if (OldItem is INotifyPropertyChanged OldIface)
+                {
+                    OldIface.PropertyChanged -= HandleItemNotification;
+                }
+
+                if (item is INotifyPropertyChanged Iface)
+                {
+                    Iface.PropertyChanged += HandleItemNotification;
+                }
+
+                NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
+                OnCollectionChanged(Args);
             }
-
-            var Iface = item as INotifyPropertyChanged;
-
-            if (Iface != null)
-            {
-                Iface.PropertyChanged += HandleItemNotification;
-            }
-
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
-            OnCollectionChanged(Args);
         }
 
         protected void OnItemChanged(ItemPropertyChangedEventArgs args)

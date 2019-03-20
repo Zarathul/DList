@@ -111,7 +111,7 @@ namespace InCoding.DList
 
         public Column()
         {
-            ValueGetter = (object item) => item.ToString();
+            ValueGetter = (item) => item.ToString();
         }
 
         protected void OnPropertyChanged(PropertyChangedEventArgs args)
