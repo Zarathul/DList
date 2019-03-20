@@ -1019,7 +1019,7 @@ namespace InCoding.DList
 
                 PressedHeaderIndex = -1;
             }
-            else
+            else if (!DoColumnResizeOnLeftMouseDown)
             {
                 int CurrentItemIndex = GetItemIndexAt(e.X, e.Y);
                 int OldFocusedItemIndex = FocusedItemIndex;
