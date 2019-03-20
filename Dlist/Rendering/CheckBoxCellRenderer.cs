@@ -36,7 +36,11 @@ namespace InCoding.DList.Rendering
             var CheckBoxSize = CheckBoxRenderer.GetGlyphSize(gfx, CheckBoxDrawState);
 
             var AlignedCheckboxRectangle = Utils.AlignInRectangle(bounds, CheckBoxSize, Alignment);
-            CheckBoxRenderer.DrawCheckBox(gfx, AlignedCheckboxRectangle.Location, CheckBoxDrawState);
+
+            if (!AlignedCheckboxRectangle.IsEmpty)  // Can happen if the cell is very tiny and the checkbox does not fit.
+            {
+                CheckBoxRenderer.DrawCheckBox(gfx, AlignedCheckboxRectangle.Location, CheckBoxDrawState);
+            }
         }
     }
 }

@@ -55,7 +55,7 @@ namespace InCoding.DList
         {
             if (alignmentSize.Width > bounds.Width || alignmentSize.Height > bounds.Height)
             {
-                throw new ArgumentException("Size to big to fit bounds.", nameof(alignmentSize));
+                return Rectangle.Empty;
             }
 
             int HorizontalOffset;
