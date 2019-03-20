@@ -101,9 +101,7 @@ namespace InCoding
         {
             if (dList1.AllowMultipleSelectedItems)
             {
-                var Indices = new int[dList1.SelectedItemIndices.Count];
-                dList1.SelectedItemIndices.CopyTo(Indices, 0);
-                dList1.Items.RemoveAt(Indices);
+                dList1.Items.RemoveAt(dList1.SelectedItemIndices);
             }
             else if (dList1.SelectedItemIndex >= 0)
             {
