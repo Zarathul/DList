@@ -71,6 +71,7 @@ namespace InCoding.DList
 
         private bool IsFirstPaint = true;
         private bool DoColumnResizeOnLeftMouseDown = false;
+        private bool IsSelectedItemChangedEventActive = true;
         private Point ItemSelectionStart = Point.Empty;
         private Point ItemSelectionEnd = Point.Empty;
         private ICellEditor ActiveCellEditor;
@@ -793,7 +794,7 @@ namespace InCoding.DList
                         }
                         else
                         {
-                            SelectAllItems();
+                            SelectAll();
                         }
 
                         e.Handled = true;
@@ -1031,7 +1032,8 @@ namespace InCoding.DList
             {
                 int CurrentItemIndex = GetItemIndexAt(e.X, e.Y);
                 int OldFocusedItemIndex = FocusedItemIndex;
-                bool AddToSelection = ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control);
+                bool AddRangeToSelection = ModifierKeys.HasFlag(Keys.Shift);
+                bool ToggleSelection = ModifierKeys.HasFlag(Keys.Control);
                 bool ItemWasClicked = CurrentItemIndex >= 0 && CurrentItemIndex == _PressedItemIndex;
                 bool MultiSelecting = !ItemSelectionEnd.IsEmpty;
 
@@ -1043,17 +1045,44 @@ namespace InCoding.DList
                     }
                     else   // Select only the item under the cursor if there is no selection rectangle.
                     {
-                        bool SelectedItemsIndicesCleared = false;
-                        
-                        if (!AddToSelection && (SelectedItemIndices.Count > 1 || !SelectedItemIndices.Contains(CurrentItemIndex)))
+                        bool SelectedItemIndicesCleared = false;
+
+                        // Clear the selection if no modifier key was pressed and either multiple items were selected or an item was 
+                        // clicked that was not selected or no item was clicked at all (e.g. a blank space).
+                        if (!AddRangeToSelection && !ToggleSelection
+                            && (!ItemWasClicked || SelectedItemIndices.Count > 1 || !SelectedItemIndices.Contains(CurrentItemIndex)))
                         {
                             SelectedItemIndices.Clear();
-                            SelectedItemsIndicesCleared = true;
+                            SelectedItemIndicesCleared = true;
                         }
 
-                        if (ItemWasClicked && (SelectedItemsIndicesCleared || !SelectedItemIndices.Contains(CurrentItemIndex)))
+                        if (ItemWasClicked)
                         {
-                            SelectedItemIndices.Add(CurrentItemIndex);
+                            if (ToggleSelection)
+                            {
+                                if (SelectedItemIndices.Contains(CurrentItemIndex))
+                                {
+                                    SelectedItemIndices.Remove(CurrentItemIndex);
+                                }
+                                else
+                                {
+                                    SelectedItemIndices.Add(CurrentItemIndex);
+                                }
+                            }
+                            else if (SelectedItemIndicesCleared || !SelectedItemIndices.Contains(CurrentItemIndex))
+                            {
+                                if (AddRangeToSelection)
+                                {
+                                    if (OldFocusedItemIndex >= 0)
+                                    {
+                                        this.AddRangeToSelection(CurrentItemIndex, OldFocusedItemIndex);
+                                    }
+                                }
+                                else
+                                {
+                                    SelectedItemIndices.Add(CurrentItemIndex);
+                                }
+                            }
                         }
 
                         FocusedItemIndex = CurrentItemIndex;
@@ -1071,8 +1100,8 @@ namespace InCoding.DList
                 {
                     int ColumnIndex = GetColumnIndexAt(e.X);
 
-                    // Begin cell editing if an already focused item is clicked a second time.
-                    if (!AddToSelection && FocusedItemIndex >= 0 && FocusedItemIndex == OldFocusedItemIndex)
+                    // Begin cell editing if an already focused item is clicked a second time without any modifier keys pressed.
+                    if (!AddRangeToSelection && !ToggleSelection && FocusedItemIndex >= 0 && FocusedItemIndex == OldFocusedItemIndex)
                     {
                         ItemSelectionStart = Point.Empty;
                         EnsureCellVisibility(ColumnIndex, FocusedItemIndex);
@@ -1279,7 +1308,11 @@ namespace InCoding.DList
         protected void SelectedItemIndicesChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
             if (AllowMultipleSelectedItems) Invalidate();
-            OnSelectedItemsChanged(EventArgs.Empty);
+
+            if (IsSelectedItemChangedEventActive)
+            {
+                OnSelectedItemsChanged(EventArgs.Empty);
+            }
         }
 
         #endregion
@@ -1652,10 +1685,7 @@ namespace InCoding.DList
 
             if (AllowMultipleSelectedItems)
             {
-                if (!add)
-                {
-                    SelectedItemIndices.Clear();
-                }
+                if (!add) SelectedItemIndices.Clear();
 
                 if (index >= 0 && !SelectedItemIndices.Contains(index)) // This way selecting a negative index will clear the selection.
                 {
@@ -1668,11 +1698,35 @@ namespace InCoding.DList
             }
         }
 
-        public void SelectAllItems()
+        public void SelectRange(int startIndex, int endIndex, bool add = false)
+        {
+            if (!AllowMultipleSelectedItems) return;
+
+            if (startIndex < 0 || startIndex >= Items.Count) throw new ArgumentOutOfRangeException(nameof(startIndex));
+            if (endIndex < 0 || endIndex >= Items.Count) throw new ArgumentOutOfRangeException(nameof(endIndex));
+
+            if (!add) SelectedItemIndices.Clear();
+
+            AddRangeToSelection(startIndex, endIndex);
+        }
+
+        public void SelectAll()
         {
             if (AllowMultipleSelectedItems && Items.Count > 0)
             {
                 SelectedItemIndices.AddRange(Enumerable.Range(0, Items.Count));
+            }
+        }
+
+        public void DeselectAll()
+        {
+            if (AllowMultipleSelectedItems)
+            {
+                SelectedItemIndices.Clear();
+            }
+            else
+            {
+                SelectedItemIndex = -1;
             }
         }
 
@@ -1807,14 +1861,41 @@ namespace InCoding.DList
                         {
                             int FirstItemIndex = Math.Max(0, (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight));
                             int LastItemIndex = Math.Min(Items.Count - 1, (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight));
-                            int NewSelectedItemsCount = LastItemIndex - FirstItemIndex + 1;
-                            bool AddToSelection = (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control));
+                            int AffectedIndicesCount = LastItemIndex - FirstItemIndex + 1;
+                            bool AddToSelection = ModifierKeys.HasFlag(Keys.Shift);
+                            bool ToggleSelection = ModifierKeys.HasFlag(Keys.Control);
 
-                            if (!AddToSelection) SelectedItemIndices.Clear();
+                            if (!AddToSelection && !ToggleSelection) SelectedItemIndices.Clear();
 
-                            if (NewSelectedItemsCount > 0)
+                            if (AffectedIndicesCount > 0)
                             {
-                                SelectedItemIndices.AddRange(Enumerable.Range(FirstItemIndex, NewSelectedItemsCount));
+                                var AffectedIndices = Enumerable.Range(FirstItemIndex, AffectedIndicesCount);
+
+                                if (ToggleSelection)
+                                {
+                                    // Prevent event spam. Without this we would get an event for every toggled selection.
+                                    IsSelectedItemChangedEventActive = false;
+
+                                    foreach (int index in AffectedIndices)
+                                    {
+                                        if (SelectedItemIndices.Contains(index))
+                                        {
+                                            SelectedItemIndices.Remove(index);
+                                        }
+                                        else
+                                        {
+                                            SelectedItemIndices.Add(index);
+                                        }
+                                    }
+
+                                    IsSelectedItemChangedEventActive = true;
+
+                                    OnSelectedItemsChanged(EventArgs.Empty);    // Manually trigger SelectedItemsChanged once.
+                                }
+                                else
+                                {
+                                    SelectedItemIndices.AddRange(AffectedIndices);
+                                }
                             }
 
                             // Focus the last item in the direction the selection rectangle was drawn
@@ -1830,6 +1911,15 @@ namespace InCoding.DList
 
                 if (!Invalidated) Invalidate();
             }
+        }
+
+        private void AddRangeToSelection(int startIndex, int endIndex)
+        {
+            int IndicesToAddCount = Math.Abs(endIndex - startIndex) + 1;
+            int FirstIndex = Math.Min(startIndex, endIndex);
+            var IndicesToAdd = Enumerable.Range(FirstIndex, IndicesToAddCount);
+
+            SelectedItemIndices.AddRange(IndicesToAdd);
         }
     }
 }

@@ -54,6 +54,7 @@ namespace InCoding.DList.Collections
             _EventSuspensionRequests--;
         }
 
+        // TODO: The two range methods fire changed events even if nothing has really changed. This shouldn't be the case.
         public void AddRange(IEnumerable<T> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));

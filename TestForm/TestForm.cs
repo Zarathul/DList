@@ -92,8 +92,12 @@ namespace InCoding
             var Items = TestItem.GenerateRandomItems(17, 3);
             dList1.Items.AddRange(Items);
 
-            numericUpDownItemIndex.Maximum = dList1.Items.Count - 1;
-            numericUpDownItemIndex2.Maximum = dList1.Items.Count - 1;
+            int MaxItemIndex = dList1.Items.Count - 1;
+            numericUpDownItemIndex.Maximum = MaxItemIndex;
+            numericUpDownItemIndex2.Maximum = MaxItemIndex;
+            numericUpDownSelectRangeFrom.Maximum = MaxItemIndex;
+            numericUpDownSelectRangeTo.Maximum = MaxItemIndex;
+
             numericUpDownColumnIndex.Maximum = dList1.Columns.Count - 1;
 
             dList1.Items.CollectionChanged += CollectionChangedOrChanging;
@@ -132,9 +136,22 @@ namespace InCoding
             }
         }
 
+        private void ButtonSelectRangeClick(object sender, EventArgs e)
+        {
+            int StartIndex = (int)numericUpDownSelectRangeFrom.Value;
+            int EndIndex = (int)numericUpDownSelectRangeTo.Value;
+
+            dList1.SelectRange(StartIndex, EndIndex, checkBoxAddToSelection.Checked);
+        }
+
         private void ButtonSelectAllClick(object sender, EventArgs e)
         {
-            dList1.SelectAllItems();
+            dList1.SelectAll();
+        }
+
+        private void ButtonDeselectAllClick(object sender, EventArgs e)
+        {
+            dList1.DeselectAll();
         }
 
         private void ButtonEnsureItemVisibilityClick(object sender, EventArgs e)
@@ -259,8 +276,11 @@ namespace InCoding
             }
             else
             {
-                numericUpDownItemIndex.Maximum = dList1.Items.Count - 1;
-                numericUpDownItemIndex2.Maximum = dList1.Items.Count - 1;
+                int NewMax = dList1.Items.Count - 1;
+                numericUpDownItemIndex.Maximum = NewMax;
+                numericUpDownItemIndex2.Maximum = NewMax;
+                numericUpDownSelectRangeFrom.Maximum = NewMax;
+                numericUpDownSelectRangeTo.Maximum = NewMax;
             }
         }
 

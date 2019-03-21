@@ -29,6 +29,11 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.numericUpDownSelectRangeTo = new System.Windows.Forms.NumericUpDown();
+            this.label4 = new System.Windows.Forms.Label();
+            this.numericUpDownSelectRangeFrom = new System.Windows.Forms.NumericUpDown();
+            this.label3 = new System.Windows.Forms.Label();
+            this.buttonSelectRange = new System.Windows.Forms.Button();
             this.numericUpDownRandomItems = new System.Windows.Forms.NumericUpDown();
             this.checkBoxAddToSelection = new System.Windows.Forms.CheckBox();
             this.buttonSelectAll = new System.Windows.Forms.Button();
@@ -54,7 +59,10 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.dList1 = new InCoding.DList.DList();
+            this.buttonDeselectAll = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeTo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeFrom)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownRandomItems)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownItemIndex)).BeginInit();
             this.groupBoxEvents.SuspendLayout();
@@ -74,6 +82,12 @@
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.buttonDeselectAll);
+            this.groupBox1.Controls.Add(this.numericUpDownSelectRangeTo);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.numericUpDownSelectRangeFrom);
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.buttonSelectRange);
             this.groupBox1.Controls.Add(this.numericUpDownRandomItems);
             this.groupBox1.Controls.Add(this.checkBoxAddToSelection);
             this.groupBox1.Controls.Add(this.buttonSelectAll);
@@ -83,10 +97,54 @@
             this.groupBox1.Controls.Add(this.buttonRemoveItem);
             this.groupBox1.Location = new System.Drawing.Point(6, 6);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(337, 98);
+            this.groupBox1.Size = new System.Drawing.Size(337, 124);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Items";
+            // 
+            // numericUpDownSelectRangeTo
+            // 
+            this.numericUpDownSelectRangeTo.Location = new System.Drawing.Point(264, 71);
+            this.numericUpDownSelectRangeTo.Name = "numericUpDownSelectRangeTo";
+            this.numericUpDownSelectRangeTo.Size = new System.Drawing.Size(59, 20);
+            this.numericUpDownSelectRangeTo.TabIndex = 12;
+            // 
+            // label4
+            // 
+            this.label4.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.label4.Location = new System.Drawing.Point(232, 71);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(26, 20);
+            this.label4.TabIndex = 11;
+            this.label4.Text = "to";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // numericUpDownSelectRangeFrom
+            // 
+            this.numericUpDownSelectRangeFrom.Location = new System.Drawing.Point(167, 71);
+            this.numericUpDownSelectRangeFrom.Name = "numericUpDownSelectRangeFrom";
+            this.numericUpDownSelectRangeFrom.Size = new System.Drawing.Size(59, 20);
+            this.numericUpDownSelectRangeFrom.TabIndex = 10;
+            // 
+            // label3
+            // 
+            this.label3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.label3.Location = new System.Drawing.Point(124, 71);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(37, 20);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "from";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // buttonSelectRange
+            // 
+            this.buttonSelectRange.Location = new System.Drawing.Point(6, 71);
+            this.buttonSelectRange.Name = "buttonSelectRange";
+            this.buttonSelectRange.Size = new System.Drawing.Size(112, 20);
+            this.buttonSelectRange.TabIndex = 8;
+            this.buttonSelectRange.Text = "Select range";
+            this.buttonSelectRange.UseVisualStyleBackColor = true;
+            this.buttonSelectRange.Click += new System.EventHandler(this.ButtonSelectRangeClick);
             // 
             // numericUpDownRandomItems
             // 
@@ -122,11 +180,11 @@
             // 
             // buttonSelectAll
             // 
-            this.buttonSelectAll.Location = new System.Drawing.Point(6, 71);
+            this.buttonSelectAll.Location = new System.Drawing.Point(6, 97);
             this.buttonSelectAll.Name = "buttonSelectAll";
             this.buttonSelectAll.Size = new System.Drawing.Size(112, 20);
             this.buttonSelectAll.TabIndex = 4;
-            this.buttonSelectAll.Text = "Select all items";
+            this.buttonSelectAll.Text = "Select all";
             this.buttonSelectAll.UseVisualStyleBackColor = true;
             this.buttonSelectAll.Click += new System.EventHandler(this.ButtonSelectAllClick);
             // 
@@ -148,7 +206,7 @@
             this.buttonSelectItem.Name = "buttonSelectItem";
             this.buttonSelectItem.Size = new System.Drawing.Size(112, 20);
             this.buttonSelectItem.TabIndex = 2;
-            this.buttonSelectItem.Text = "Select item";
+            this.buttonSelectItem.Text = "Select";
             this.buttonSelectItem.UseVisualStyleBackColor = true;
             this.buttonSelectItem.Click += new System.EventHandler(this.ButtonSelectItemClick);
             // 
@@ -164,7 +222,7 @@
             // 
             // buttonRemoveItem
             // 
-            this.buttonRemoveItem.Location = new System.Drawing.Point(124, 71);
+            this.buttonRemoveItem.Location = new System.Drawing.Point(189, 19);
             this.buttonRemoveItem.Name = "buttonRemoveItem";
             this.buttonRemoveItem.Size = new System.Drawing.Size(112, 20);
             this.buttonRemoveItem.TabIndex = 1;
@@ -252,7 +310,7 @@
             this.groupBox2.Controls.Add(this.label1);
             this.groupBox2.Controls.Add(this.numericUpDownItemIndex2);
             this.groupBox2.Controls.Add(this.numericUpDownColumnIndex);
-            this.groupBox2.Location = new System.Drawing.Point(6, 110);
+            this.groupBox2.Location = new System.Drawing.Point(6, 136);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(337, 143);
             this.groupBox2.TabIndex = 6;
@@ -387,6 +445,16 @@
             this.dList1.CellClicked += new System.EventHandler<InCoding.DList.CellClickEventArgs>(this.DList1CellClicked);
             this.dList1.SelectedItemsChanged += new System.EventHandler(this.DList1SelectedItemsChanged);
             // 
+            // buttonDeselectAll
+            // 
+            this.buttonDeselectAll.Location = new System.Drawing.Point(124, 97);
+            this.buttonDeselectAll.Name = "buttonDeselectAll";
+            this.buttonDeselectAll.Size = new System.Drawing.Size(112, 20);
+            this.buttonDeselectAll.TabIndex = 13;
+            this.buttonDeselectAll.Text = "Deselect all";
+            this.buttonDeselectAll.UseVisualStyleBackColor = true;
+            this.buttonDeselectAll.Click += new System.EventHandler(this.ButtonDeselectAllClick);
+            // 
             // TestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -397,6 +465,8 @@
             this.Text = "Form1";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeTo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeFrom)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownRandomItems)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownItemIndex)).EndInit();
             this.groupBoxEvents.ResumeLayout(false);
@@ -441,6 +511,12 @@
         private System.Windows.Forms.Button buttonCancelEdit;
         private System.Windows.Forms.Button buttonBeginEdit;
         private System.Windows.Forms.NumericUpDown numericUpDownRandomItems;
+        private System.Windows.Forms.NumericUpDown numericUpDownSelectRangeTo;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.NumericUpDown numericUpDownSelectRangeFrom;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button buttonSelectRange;
+        private System.Windows.Forms.Button buttonDeselectAll;
     }
 }
 
