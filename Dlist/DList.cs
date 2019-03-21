@@ -17,6 +17,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 
@@ -775,6 +776,11 @@ namespace InCoding.DList
 
                 case Keys.Space:
                     HandleSpace(e.Modifiers);
+                    e.Handled = true;
+                    break;
+
+                case Keys.Delete:
+                    RemoveSelectedItems();
                     e.Handled = true;
                     break;
 
@@ -1664,14 +1670,21 @@ namespace InCoding.DList
 
         public void SelectAllItems()
         {
+            if (AllowMultipleSelectedItems && Items.Count > 0)
+            {
+                SelectedItemIndices.AddRange(Enumerable.Range(0, Items.Count));
+            }
+        }
+
+        public void RemoveSelectedItems()
+        {
             if (AllowMultipleSelectedItems)
             {
-                SelectedItemIndices.Clear();
-
-                for (int i = 0; i < Items.Count; i++)
-                {
-                    SelectedItemIndices.Add(i);
-                }
+                Items.RemoveAtRange(SelectedItemIndices);
+            }
+            else if (_SelectedItemIndex >= 0)
+            {
+                Items.RemoveAt(_SelectedItemIndex);
             }
         }
 
@@ -1794,23 +1807,14 @@ namespace InCoding.DList
                         {
                             int FirstItemIndex = Math.Max(0, (int)Math.Floor((Selection.Y - ItemHeight) / (double)ItemHeight));
                             int LastItemIndex = Math.Min(Items.Count - 1, (int)Math.Floor((Selection.Bottom - 1 - ItemHeight) / (double)ItemHeight));
+                            int NewSelectedItemsCount = LastItemIndex - FirstItemIndex + 1;
                             bool AddToSelection = (ModifierKeys.HasFlag(Keys.Shift) || ModifierKeys.HasFlag(Keys.Control));
 
                             if (!AddToSelection) SelectedItemIndices.Clear();
 
-                            for (int i = FirstItemIndex; i <= LastItemIndex; i++)
+                            if (NewSelectedItemsCount > 0)
                             {
-                                if (AddToSelection)
-                                {
-                                    if (!SelectedItemIndices.Contains(i))
-                                    {
-                                        SelectedItemIndices.Add(i);
-                                    }
-                                }
-                                else
-                                {
-                                    SelectedItemIndices.Add(i);
-                                }
+                                SelectedItemIndices.AddRange(Enumerable.Range(FirstItemIndex, NewSelectedItemsCount));
                             }
 
                             // Focus the last item in the direction the selection rectangle was drawn

@@ -21,7 +21,9 @@ namespace InCoding.DList.Collections
     public enum NotifyingCollectionChangeAction
     {
         Add,
+        AddRange,
         Remove,
+        RemoveRange,
         Replace,
         Clear,
         Sort

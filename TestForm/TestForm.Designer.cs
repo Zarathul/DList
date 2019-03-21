@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.numericUpDownRandomItems = new System.Windows.Forms.NumericUpDown();
             this.checkBoxAddToSelection = new System.Windows.Forms.CheckBox();
             this.buttonSelectAll = new System.Windows.Forms.Button();
             this.numericUpDownItemIndex = new System.Windows.Forms.NumericUpDown();
@@ -54,6 +55,7 @@
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.dList1 = new InCoding.DList.DList();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownRandomItems)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownItemIndex)).BeginInit();
             this.groupBoxEvents.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -72,6 +74,7 @@
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.numericUpDownRandomItems);
             this.groupBox1.Controls.Add(this.checkBoxAddToSelection);
             this.groupBox1.Controls.Add(this.buttonSelectAll);
             this.groupBox1.Controls.Add(this.numericUpDownItemIndex);
@@ -84,6 +87,28 @@
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Items";
+            // 
+            // numericUpDownRandomItems
+            // 
+            this.numericUpDownRandomItems.Location = new System.Drawing.Point(124, 19);
+            this.numericUpDownRandomItems.Maximum = new decimal(new int[] {
+            100000,
+            0,
+            0,
+            0});
+            this.numericUpDownRandomItems.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numericUpDownRandomItems.Name = "numericUpDownRandomItems";
+            this.numericUpDownRandomItems.Size = new System.Drawing.Size(59, 20);
+            this.numericUpDownRandomItems.TabIndex = 7;
+            this.numericUpDownRandomItems.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             // 
             // checkBoxAddToSelection
             // 
@@ -372,6 +397,7 @@
             this.Text = "Form1";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownRandomItems)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownItemIndex)).EndInit();
             this.groupBoxEvents.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
@@ -414,6 +440,7 @@
         private System.Windows.Forms.Button buttonEnsureCellVisibility;
         private System.Windows.Forms.Button buttonCancelEdit;
         private System.Windows.Forms.Button buttonBeginEdit;
+        private System.Windows.Forms.NumericUpDown numericUpDownRandomItems;
     }
 }
 

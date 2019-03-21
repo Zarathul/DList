@@ -77,23 +77,20 @@ namespace InCoding
             dList1.ItemColorEvaluator = (item) => (((TestItem)item).NumericValue > 50) ? (Color.Black, Color.Gold) : (dList1.ForeColor, dList1.BackColor);
 
             // Progressbar test items
-            var PTestItem0 = TestItem.GenerateRandom(0);
+            var PTestItem0 = TestItem.GenerateRandomItem(0);
             PTestItem0.NumericValue = 0;
-            var PTestItem1 = TestItem.GenerateRandom(1);
+            var PTestItem1 = TestItem.GenerateRandomItem(1);
             PTestItem1.NumericValue = 50;
-            var PTestItem2 = TestItem.GenerateRandom(2);
+            var PTestItem2 = TestItem.GenerateRandomItem(2);
             PTestItem2.NumericValue = 100;
 
             dList1.Items.Add(PTestItem0);
             dList1.Items.Add(PTestItem1);
             dList1.Items.Add(PTestItem2);
 
-            // Items
-            for (int i = 3; i < 20; i++)
-            {
-                var Item = TestItem.GenerateRandom(i);
-                dList1.Items.Add(Item);
-            }
+            // Completely random items
+            var Items = TestItem.GenerateRandomItems(17, 3);
+            dList1.Items.AddRange(Items);
 
             numericUpDownItemIndex.Maximum = dList1.Items.Count - 1;
             numericUpDownItemIndex2.Maximum = dList1.Items.Count - 1;
@@ -109,20 +106,22 @@ namespace InCoding
 
         private void ButtonAddRngItemClick(object sender, EventArgs e)
         {
-            var NewItem = TestItem.GenerateRandom();
-            dList1.Items.Add(NewItem);
+            int NewItemCount = (int)numericUpDownRandomItems.Value;
+
+            if (NewItemCount == 1)  // This is intentional to test the different events.
+            {
+                var NewItem = TestItem.GenerateRandomItem();
+                dList1.Items.Add(NewItem);
+            }
+            else if (NewItemCount > 1)
+            {
+                dList1.Items.AddRange(TestItem.GenerateRandomItems(NewItemCount));
+            }
         }
 
         private void ButtonRemoveItemClick(object sender, EventArgs e)
         {
-            if (dList1.AllowMultipleSelectedItems)
-            {
-                dList1.Items.RemoveAt(dList1.SelectedItemIndices);
-            }
-            else if (dList1.SelectedItemIndex >= 0)
-            {
-                dList1.Items.RemoveAt(dList1.SelectedItemIndex);
-            }
+            dList1.RemoveSelectedItems();
         }
 
         private void ButtonSelectItemClick(object sender, EventArgs e)
@@ -228,8 +227,14 @@ namespace InCoding
                 case NotifyingCollectionChangeAction.Add:
                     Entry = String.Format("{0}[{1}] == ADD {2}[{3}]", Source, EventType, args.NewItem, args.NewItemIndex);
                     break;
+                case NotifyingCollectionChangeAction.AddRange:
+                    Entry = String.Format("{0}[{1}] == ADD_RANGE", Source, EventType);
+                    break;
                 case NotifyingCollectionChangeAction.Remove:
                     Entry = String.Format("{0}[{1}] == REMOVE {2}[{3}]", Source, EventType, args.OldItem, args.OldItemIndex);
+                    break;
+                case NotifyingCollectionChangeAction.RemoveRange:
+                    Entry = String.Format("{0}[{1}] == REMOVE_RANGE", Source, EventType);
                     break;
                 case NotifyingCollectionChangeAction.Replace:
                     Entry = String.Format("{0}[{1}] == REPLACE {2}[{3}] with {4}[{5}]", Source, EventType, args.OldItem, args.OldItemIndex, args.NewItem, args.NewItemIndex);
@@ -241,6 +246,7 @@ namespace InCoding
                     Entry = String.Format("{0}[{1}] == SORT", Source, EventType);
                     break;
                 default:
+                    Entry = String.Format("{0}[{1}] == UNKNOWN", Source, EventType);
                     break;
             }
 

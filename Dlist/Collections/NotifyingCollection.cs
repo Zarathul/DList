@@ -26,6 +26,9 @@ namespace InCoding.DList.Collections
     {
         private List<T> _ItemList;
         private HashSet<T> _Set;
+        private int _EventSuspensionRequests = 0;
+
+        protected bool EventsSuspended { get => (_EventSuspensionRequests > 0); }
 
         public event EventHandler<NotifyingCollectionChangedEventArgs> CollectionChanged;
         public event EventHandler<NotifyingCollectionChangingEventArgs> CollectionChanging;
@@ -41,20 +44,45 @@ namespace InCoding.DList.Collections
             _Set = new HashSet<T>(list);
         }
 
+        public void SuspendEvents()
+        {
+            _EventSuspensionRequests++;
+        }
+
+        public void ResumeEvents()
+        {
+            _EventSuspensionRequests--;
+        }
+
         public void AddRange(IEnumerable<T> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
 
-            int FirstEmptyIndex = Items.Count;
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.AddRange);
+                OnCollectionChanging(ChangingArgs);
+
+                if (ChangingArgs.Cancel) return;
+            }
+
+            SuspendEvents();
 
             foreach (var item in items)
             {
-                InsertItem(FirstEmptyIndex, item);
-                FirstEmptyIndex++;
+                InsertItem(Items.Count, item);
+            }
+
+            ResumeEvents();
+
+            if (!EventsSuspended)
+            {
+                var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.AddRange);
+                OnCollectionChanged(ChangedArgs);
             }
         }
 
-        public void RemoveAt(IEnumerable<int> indices)
+        public void RemoveAtRange(IEnumerable<int> indices)
         {
             if (indices == null) throw new ArgumentNullException(nameof(indices));
 
@@ -63,17 +91,47 @@ namespace InCoding.DList.Collections
             if (SortedIndices.Length == 0) return;
             if (SortedIndices[0] < 0 || SortedIndices[SortedIndices.Length - 1] >= Count) throw new ArgumentOutOfRangeException(nameof(indices));
 
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.RemoveRange);
+                OnCollectionChanging(ChangingArgs);
+
+                if (ChangingArgs.Cancel) return;
+            }
+
+            SuspendEvents();
+
             for (int i = SortedIndices.Length - 1; i >= 0; i--)
             {
-                RemoveAt(SortedIndices[i]);
+                RemoveItem(SortedIndices[i]);
+            }
+
+            ResumeEvents();
+
+            if (!EventsSuspended)
+            {
+                var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.RemoveRange);
+                OnCollectionChanged(ChangedArgs);
             }
         }
 
         public void Sort()
         {
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Sort);
+                OnCollectionChanging(ChangingArgs);
+
+                if (ChangingArgs.Cancel) return;
+            }
+
             _ItemList.Sort();
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Sort);
-            OnCollectionChanged(Args);
+
+            if (!EventsSuspended)
+            {
+                var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Sort);
+                OnCollectionChanged(ChangedArgs);
+            }
         }
 
         public new bool Contains(T item)
@@ -87,10 +145,13 @@ namespace InCoding.DList.Collections
         {
             if (Items.Count == 0) return;
 
-            var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Clear);
-            OnCollectionChanging(ChangingArgs);
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Clear);
+                OnCollectionChanging(ChangingArgs);
 
-            if (ChangingArgs.Cancel) return;
+                if (ChangingArgs.Cancel) return;
+            }
 
             foreach (var item in Items)
             {
@@ -103,16 +164,22 @@ namespace InCoding.DList.Collections
             _Set.Clear();
             base.ClearItems();
 
-            var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Clear);
-            OnCollectionChanged(ChangedArgs);
+            if (!EventsSuspended)
+            {
+                var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Clear);
+                OnCollectionChanged(ChangedArgs);
+            }
         }
 
         protected override void InsertItem(int index, T item)
         {
-            var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, -1);
-            OnCollectionChanging(ChangingArgs);
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, -1);
+                OnCollectionChanging(ChangingArgs);
 
-            if (ChangingArgs.Cancel) return;
+                if (ChangingArgs.Cancel) return;
+            }
 
             if (_Set.Add(item))
             {
@@ -123,18 +190,25 @@ namespace InCoding.DList.Collections
                     Iface.PropertyChanged += HandleItemNotification;
                 }
 
-                NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, -1);
-                OnCollectionChanged(Args);
+                if (!EventsSuspended)
+                {
+                    var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Add, item, index, null, -1);
+                    OnCollectionChanged(ChangedArgs);
+                }
             }
         }
 
         protected override void RemoveItem(int index)
         {
             var Item = Items[index];
-            var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Remove, null, -1, Item, index);
-            OnCollectionChanging(ChangingArgs);
 
-            if (ChangingArgs.Cancel) return;
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Remove, null, -1, Item, index);
+                OnCollectionChanging(ChangingArgs);
+
+                if (ChangingArgs.Cancel) return;
+            }
 
             _Set.Remove(Item);
             base.RemoveItem(index);
@@ -144,17 +218,24 @@ namespace InCoding.DList.Collections
                 Iface.PropertyChanged -= HandleItemNotification;
             }
 
-            NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Remove, null, -1, Item, index);
-            OnCollectionChanged(Args);
+            if (!EventsSuspended)
+            {
+                var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Remove, null, -1, Item, index);
+                OnCollectionChanged(ChangedArgs);
+            }
         }
 
         protected override void SetItem(int index, T item)
         {
             var OldItem = Items[index];
-            var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
-            OnCollectionChanging(ChangingArgs);
 
-            if (ChangingArgs.Cancel) return;
+            if (!EventsSuspended)
+            {
+                var ChangingArgs = new NotifyingCollectionChangingEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
+                OnCollectionChanging(ChangingArgs);
+
+                if (ChangingArgs.Cancel) return;
+            }
 
             if (_Set.Add(item))
             {
@@ -171,8 +252,11 @@ namespace InCoding.DList.Collections
                     Iface.PropertyChanged += HandleItemNotification;
                 }
 
-                NotifyingCollectionChangedEventArgs Args = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
-                OnCollectionChanged(Args);
+                if (!EventsSuspended)
+                {
+                    var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.Replace, item, index, OldItem, index);
+                    OnCollectionChanged(ChangedArgs);
+                }
             }
         }
 
@@ -196,8 +280,11 @@ namespace InCoding.DList.Collections
 
         private void HandleItemNotification(object sender, PropertyChangedEventArgs args)
         {
-            var Args = new ItemPropertyChangedEventArgs(sender, args.PropertyName);
-            OnItemChanged(Args);
+            if (!EventsSuspended)
+            {
+                var Args = new ItemPropertyChangedEventArgs(sender, args.PropertyName);
+                OnItemChanged(Args);
+            }
         }
     }
 }

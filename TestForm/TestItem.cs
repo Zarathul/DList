@@ -107,7 +107,7 @@ namespace InCoding
 
         private static Random _Rng = new Random();
 
-        public static TestItem GenerateRandom(int index = -1)
+        public static TestItem GenerateRandomItem(int index = -1)
         {
             int NameLength = _Rng.Next(5, 24);
             if (index >= 0) NameLength += 8;
@@ -148,6 +148,22 @@ namespace InCoding
             DateTime RngDate = DateTimeOffset.FromUnixTimeSeconds(_Rng.Next()).DateTime;
 
             return new TestItem(RngName.ToString(), RngNumber, RngFlag, RngDate);
+        }
+
+        public static TestItem[] GenerateRandomItems(int count, int startIndex = -1)
+        {
+            if (count <= 0) return null;
+
+            var Items = new TestItem[count];
+            int IndexOffset = (startIndex >= 0) ? 1 : 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                Items[i] = GenerateRandomItem(startIndex);
+                startIndex += IndexOffset;
+            }
+
+            return Items;
         }
     }
 }
