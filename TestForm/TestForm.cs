@@ -106,6 +106,10 @@ namespace InCoding
 
             dList1.Columns.CollectionChanged += CollectionChangedOrChanging;
             dList1.Columns.CollectionChanging += CollectionChangedOrChanging;
+            dList1.Columns.ItemChanged += ItemChanged;
+
+            dList1.SelectedItemIndices.CollectionChanged += CollectionChangedOrChanging;
+            dList1.SelectedItemIndices.CollectionChanging += CollectionChangedOrChanging;
         }
 
         private void ButtonAddRngItemClick(object sender, EventArgs e)
@@ -190,6 +194,8 @@ namespace InCoding
 
         private void DList1CellClicked(object sender, CellClickEventArgs e)
         {
+            if (!checkBoxCellClicked.Checked) return;
+
             string Entry = String.Format("CellClicked >> ColumnIndex: {0}, ItemIndex: {1}", e.ColumnIndex, e.ItemIndex);
             listBoxEvents.Items.Add(Entry);
             listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
@@ -197,6 +203,8 @@ namespace InCoding
 
         private void DList1HeaderClicked(object sender, HeaderClickEventArgs e)
         {
+            if (!checkBoxHeaderClicked.Checked) return;
+
             string Entry = String.Format("HeaderClicked >> ColumnIndex: {0}", e.Index);
             listBoxEvents.Items.Add(Entry);
             listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
@@ -204,6 +212,8 @@ namespace InCoding
 
         private void DList1SelectedItemsChanged(object sender, EventArgs e)
         {
+            if (!checkBoxSelectedItemsChanged.Checked) return;
+
             var ItemIndices = new StringBuilder();
 
             if (dList1.AllowMultipleSelectedItems)
@@ -234,47 +244,72 @@ namespace InCoding
 
         private void CollectionChangedOrChanging(object sender, NotifyingCollectionChangedEventArgs args)
         {
-            string Entry = string.Empty;
-            bool SourceIsColumns = (sender is NotifyingCollection<Column>);
-            string Source = SourceIsColumns ? "Columns" : "Items";
-            string EventType = (args is NotifyingCollectionChangingEventArgs) ? "CHANGING" : "CHANGED";
+            const int Items = 0;
+            const int Columns = 1;
+            const int Indices = 2;
+            bool Changing = (args is NotifyingCollectionChangingEventArgs);
+            int SourceType = (sender is NotifyingCollection<int>) ? Indices : (sender is NotifyingCollection<Column>) ? Columns : Items;
+            bool AddEventLogEntry = false;
 
-            switch (args.Action)
+            switch (SourceType)
             {
-                case NotifyingCollectionChangeAction.Add:
-                    Entry = String.Format("{0}[{1}] == ADD {2}[{3}]", Source, EventType, args.NewItem, args.NewItemIndex);
+                case Items:
+                    AddEventLogEntry = ((Changing && checkBoxItemsChanging.Checked) || (!Changing && checkBoxItemsChanged.Checked));
                     break;
-                case NotifyingCollectionChangeAction.AddRange:
-                    Entry = String.Format("{0}[{1}] == ADD_RANGE", Source, EventType);
+
+                case Columns:
+                    AddEventLogEntry = ((Changing && checkBoxColumnsChanging.Checked) || (!Changing && checkBoxColumnsChanged.Checked));
                     break;
-                case NotifyingCollectionChangeAction.Remove:
-                    Entry = String.Format("{0}[{1}] == REMOVE {2}[{3}]", Source, EventType, args.OldItem, args.OldItemIndex);
-                    break;
-                case NotifyingCollectionChangeAction.RemoveRange:
-                    Entry = String.Format("{0}[{1}] == REMOVE_RANGE", Source, EventType);
-                    break;
-                case NotifyingCollectionChangeAction.Replace:
-                    Entry = String.Format("{0}[{1}] == REPLACE {2}[{3}] with {4}[{5}]", Source, EventType, args.OldItem, args.OldItemIndex, args.NewItem, args.NewItemIndex);
-                    break;
-                case NotifyingCollectionChangeAction.Clear:
-                    Entry = String.Format("{0}[{1}] == CLEAR", Source, EventType);
-                    break;
-                case NotifyingCollectionChangeAction.Sort:
-                    Entry = String.Format("{0}[{1}] == SORT", Source, EventType);
-                    break;
-                default:
-                    Entry = String.Format("{0}[{1}] == UNKNOWN", Source, EventType);
+
+                case Indices:
+                    AddEventLogEntry = ((Changing && checkBoxSelectedIndicesChanging.Checked) || (!Changing && checkBoxSelectedIndicesChanged.Checked));
                     break;
             }
 
-            listBoxEvents.Items.Add(Entry);
-            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+            if (AddEventLogEntry)
+            {
+                string Source = (SourceType == Items) ? "Items" : (SourceType == Columns) ? "Columns" : "SelectedItemIndices";
+                string EventType = (Changing) ? "CHANGING" : "CHANGED";
+                string Entry = string.Empty;
 
-            if (SourceIsColumns)
+                switch (args.Action)
+                {
+                    case NotifyingCollectionChangeAction.Add:
+                        Entry = String.Format("{0}[{1}] == ADD {2}[{3}]", Source, EventType, args.NewItem, args.NewItemIndex);
+                        break;
+                    case NotifyingCollectionChangeAction.AddRange:
+                        Entry = String.Format("{0}[{1}] == ADD_RANGE", Source, EventType);
+                        break;
+                    case NotifyingCollectionChangeAction.Remove:
+                        Entry = String.Format("{0}[{1}] == REMOVE {2}[{3}]", Source, EventType, args.OldItem, args.OldItemIndex);
+                        break;
+                    case NotifyingCollectionChangeAction.RemoveRange:
+                        Entry = String.Format("{0}[{1}] == REMOVE_RANGE", Source, EventType);
+                        break;
+                    case NotifyingCollectionChangeAction.Replace:
+                        Entry = String.Format("{0}[{1}] == REPLACE {2}[{3}] with {4}[{5}]", Source, EventType, args.OldItem, args.OldItemIndex, args.NewItem, args.NewItemIndex);
+                        break;
+                    case NotifyingCollectionChangeAction.Clear:
+                        Entry = String.Format("{0}[{1}] == CLEAR", Source, EventType);
+                        break;
+                    case NotifyingCollectionChangeAction.Sort:
+                        Entry = String.Format("{0}[{1}] == SORT", Source, EventType);
+                        break;
+                    default:
+                        Entry = String.Format("{0}[{1}] == UNKNOWN", Source, EventType);
+                        break;
+                }
+
+                listBoxEvents.Items.Add(Entry);
+                listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+            }
+
+
+            if (SourceType == Columns)
             {
                 numericUpDownColumnIndex.Maximum = dList1.Columns.Count - 1;
             }
-            else
+            else if (SourceType == Items)
             {
                 int NewMax = dList1.Items.Count - 1;
                 numericUpDownItemIndex.Maximum = NewMax;
@@ -286,9 +321,15 @@ namespace InCoding
 
         private void ItemChanged(object sender, ItemPropertyChangedEventArgs args)
         {
-            string Entry = String.Format("ItemChanged [{0}] == {1}", args.PropertyName, args.Item);
-            listBoxEvents.Items.Add(Entry);
-            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+            bool SourceIsColumns = (sender is NotifyingCollection<Column>);
+            bool AddEventLogEntry = ((SourceIsColumns && checkBoxColumnChanged.Checked) || (!SourceIsColumns && checkBoxItemChanged.Checked));
+
+            if (AddEventLogEntry)
+            {
+                string Entry = String.Format("{0} changed [{1}] == {2}", (SourceIsColumns) ? "Column" : "Item", args.PropertyName, args.Item);
+                listBoxEvents.Items.Add(Entry);
+                listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+            }
         }
     }
 }

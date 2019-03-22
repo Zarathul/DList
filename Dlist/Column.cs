@@ -155,5 +155,10 @@ namespace InCoding.DList
                 ValueSetter?.Invoke(item, value);
             }
         }
+
+        public override string ToString()
+        {
+            return _Name;
+        }
     }
 }
