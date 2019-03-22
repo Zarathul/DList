@@ -54,7 +54,6 @@ namespace InCoding.DList.Collections
             _EventSuspensionRequests--;
         }
 
-        // TODO: The two range methods fire changed events even if nothing has really changed. This shouldn't be the case.
         public void AddRange(IEnumerable<T> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
@@ -69,6 +68,8 @@ namespace InCoding.DList.Collections
 
             SuspendEvents();
 
+            int OldItemCount = Count;
+
             foreach (var item in items)
             {
                 InsertItem(Items.Count, item);
@@ -76,7 +77,7 @@ namespace InCoding.DList.Collections
 
             ResumeEvents();
 
-            if (!EventsSuspended)
+            if (!EventsSuspended && (Count != OldItemCount))
             {
                 var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.AddRange);
                 OnCollectionChanged(ChangedArgs);
@@ -102,6 +103,8 @@ namespace InCoding.DList.Collections
 
             SuspendEvents();
 
+            int OldItemCount = Count;
+
             for (int i = SortedIndices.Length - 1; i >= 0; i--)
             {
                 RemoveItem(SortedIndices[i]);
@@ -109,7 +112,7 @@ namespace InCoding.DList.Collections
 
             ResumeEvents();
 
-            if (!EventsSuspended)
+            if (!EventsSuspended && (Count != OldItemCount))
             {
                 var ChangedArgs = new NotifyingCollectionChangedEventArgs(NotifyingCollectionChangeAction.RemoveRange);
                 OnCollectionChanged(ChangedArgs);

@@ -635,13 +635,24 @@ namespace InCoding.DList
 
             var TotalColumnWidth = 0;
 
-            // Vertical grid lines.
-            foreach (var column in Columns)
+            if (Items.Count > 0)
             {
-                TotalColumnWidth += column.Width;
-                X += column.Width;
-                gfx.DrawLine(GridPen, X, Y1, X, Y2);
+                // Vertical grid lines.
+                foreach (var column in Columns)
+                {
+                    TotalColumnWidth += column.Width;
+                    X += column.Width;
+                    gfx.DrawLine(GridPen, X, Y1, X, Y2);
+                }
             }
+            else
+            {
+                foreach (var column in Columns)
+                {
+                    TotalColumnWidth += column.Width;
+                }
+            }
+
 
             // Horizontal grid lines.
             var X1 = _ContentRectangle.X;
@@ -766,12 +777,22 @@ namespace InCoding.DList
                     break;
 
                 case Keys.Home:
-                    ScrollToBegin();
+                    if (Items.Count > 0)
+                    {
+                        ScrollToBegin();
+                        if (e.Shift) SelectRange(_FocusedItemIndex, 0, true);
+                        if (e.Control) FocusedItemIndex = 0;
+                    }
                     e.Handled = true;
                     break;
 
                 case Keys.End:
-                    ScrollToEnd();
+                    if (Items.Count > 0)
+                    {
+                        ScrollToEnd();
+                        if (e.Shift) SelectRange(_FocusedItemIndex, Items.Count - 1, true);
+                        if (e.Control) FocusedItemIndex = Items.Count - 1;
+                    }
                     e.Handled = true;
                     break;
 
