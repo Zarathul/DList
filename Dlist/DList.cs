@@ -96,7 +96,7 @@ namespace InCoding.DList
 
         [DefaultValue(true)]
         [Category("Behavior")]
-        public bool AllowColumnReorder { get; set; } = true;
+        public bool AllowColumnReordering { get; set; } = true;
 
         [DefaultValue(typeof(Color), "Highlight")]
         [Category("Appearance")]
@@ -1251,7 +1251,7 @@ namespace InCoding.DList
                         UpdateSelectionRectangle(e.X, e.Y);
                     }
                 }
-                else if (AllowColumnReorder)
+                else if (AllowColumnReordering)
                 {
                     ReorderColumnIndex = GetColumnHeaderIndexAt(e.X, e.Y);
                 }
