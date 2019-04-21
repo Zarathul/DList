@@ -55,6 +55,7 @@ namespace InCoding.DList
         private int _PressedHeaderIndex = -1;
         private int _PressedItemIndex = -1;
         private int _SelectionRectangleAlpha = 128;
+        private int _ReorderColumnIndex = -1;
         private Color _SelectedItemColor = SystemColors.Highlight;
         private Color _HotItemColor = SystemColors.HotTrack;
         private Color _GridColor = SystemColors.ControlDark;
@@ -92,6 +93,10 @@ namespace InCoding.DList
                 }
             }
         }
+
+        [DefaultValue(true)]
+        [Category("Behavior")]
+        public bool AllowColumnReorder { get; set; } = true;
 
         [DefaultValue(typeof(Color), "Highlight")]
         [Category("Appearance")]
@@ -430,6 +435,19 @@ namespace InCoding.DList
             get => new Size(4 * ItemHeight, 2 * ItemHeight);
         }
 
+        private int ReorderColumnIndex
+        {
+            get { return _ReorderColumnIndex; }
+            set
+            {
+                if (_ReorderColumnIndex != value)
+                {
+                    _ReorderColumnIndex = value;
+                    Invalidate();
+                }
+            }
+        }
+
         #endregion
 
         #region Events
@@ -561,6 +579,12 @@ namespace InCoding.DList
 
                 Bounds.Width = column.Width;
                 State = (Index == HotHeaderIndex) ? RenderState.Hot : (Index == PressedHeaderIndex) ? RenderState.Pressed : RenderState.Normal;
+
+                if ((ReorderColumnIndex == Index) && (ReorderColumnIndex != PressedHeaderIndex))
+                {
+                    State |= RenderState.Focused;
+                }
+
                 var HeaderFont = column.HeaderFont ?? _HeaderFont ?? Font;
 
                 HeaderRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1), State, column.Name, ForeColor, BackColor, HeaderFont);
@@ -1039,7 +1063,24 @@ namespace InCoding.DList
 
             if (PressedHeaderIndex >= 0)
             {
-                int CurrentHeaderIndex = GetColumnHeaderIndexAt(e.X, e.Y);
+                int CurrentHeaderIndex;
+
+                if (ReorderColumnIndex >= 0)    // Should only be >=0 if AllowColumnReorder is set to true.
+                {
+                    if (ReorderColumnIndex != PressedHeaderIndex)
+                    {
+                        var ReorderColumn = Columns[PressedHeaderIndex];
+                        Columns.RemoveAt(PressedHeaderIndex);
+                        Columns.Insert(ReorderColumnIndex, ReorderColumn);
+                    }
+
+                    CurrentHeaderIndex = ReorderColumnIndex;
+                    ReorderColumnIndex = -1;
+                }
+                else
+                {
+                    CurrentHeaderIndex = GetColumnHeaderIndexAt(e.X, e.Y);
+                }
 
                 if (CurrentHeaderIndex == PressedHeaderIndex)
                 {
@@ -1203,12 +1244,16 @@ namespace InCoding.DList
                         ResizingColumn.Width = NewColumnWidth;
                     }
                 }
-                else if (_PressedHeaderIndex == -1) // Don't update the selection rectangle if a header if currently pressed.
+                else if (PressedHeaderIndex == -1) // Don't update the selection rectangle if a header if currently pressed.
                 {
                     if (AllowMultipleSelectedItems && !ItemSelectionStart.IsEmpty)
                     {
                         UpdateSelectionRectangle(e.X, e.Y);
                     }
+                }
+                else if (AllowColumnReorder)
+                {
+                    ReorderColumnIndex = GetColumnHeaderIndexAt(e.X, e.Y);
                 }
             }
 

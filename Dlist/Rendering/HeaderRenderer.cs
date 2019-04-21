@@ -63,6 +63,14 @@ namespace InCoding.DList.Rendering
                 gfx.DrawLine(SystemPens.ControlDark, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
             }
 
+            // Draw reorder indicator.
+            if (state.HasFlag(RenderState.Focused))
+            {
+                var IndicatorBrush = GetBrush(SystemColors.HotTrack);
+                var IndicatorRect = new Rectangle(bounds.Left, bounds.Bottom - 2, bounds.Width, 2);
+                gfx.FillRectangle(IndicatorBrush, IndicatorRect);
+            }
+
             // The VisualStyleRenderer does not center the text vertically with the correct TextFormatFlags, 
             // so we draw it ourselves even if visual styles are on.
             if (value != null)
