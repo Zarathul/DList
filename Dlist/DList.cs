@@ -551,7 +551,7 @@ namespace InCoding.DList
             }
         }
 
-        protected Rectangle DrawBackground(Graphics gfx)
+        protected virtual Rectangle DrawBackground(Graphics gfx)
         {
             if (SetVisualStyleRendererElement(VisualStyleElement.TextBox.TextEdit.Normal))
             {
@@ -567,7 +567,7 @@ namespace InCoding.DList
             }
         }
 
-        protected void DrawHeaders(Graphics gfx)
+        protected virtual void DrawHeaders(Graphics gfx)
         {
             var Bounds = new Rectangle(_ContentRectangle.Left - HScroll.Value, _ContentRectangle.Top, 0, ItemHeight);
             int Index = 0;
@@ -594,7 +594,7 @@ namespace InCoding.DList
             }
         }
 
-        protected void DrawItems(Graphics gfx, int firstItemIndex)
+        protected virtual void DrawItems(Graphics gfx, int firstItemIndex)
         {
             var Bounds = new Rectangle(_ContentRectangle.Left - HScroll.Value, _ContentRectangle.Top + ItemHeight, 0, ItemHeight);
 
@@ -651,7 +651,7 @@ namespace InCoding.DList
             }
         }
 
-        protected void DrawGrid(Graphics gfx)
+        protected virtual void DrawGrid(Graphics gfx)
         {
             var X = _ContentRectangle.X - 1 - HScroll.Value;
             var Y1 = _ContentRectangle.Y + ItemHeight;
@@ -699,7 +699,7 @@ namespace InCoding.DList
             }
         }
 
-        protected void DrawFocusRectangle(Graphics gfx)
+        protected virtual void DrawFocusRectangle(Graphics gfx)
         {
             var ItemPos = new Point(_ContentRectangle.X, _ContentRectangle.Y - VScroll.Value + (FocusedItemIndex + 1) * ItemHeight);
             var ItemSize= new Size(0, ItemHeight);
@@ -721,7 +721,7 @@ namespace InCoding.DList
             ControlPaint.DrawFocusRectangle(gfx, Bounds);
         }
 
-        protected void DrawSelectionRectangle(Graphics gfx, Point start, Point end)
+        protected virtual void DrawSelectionRectangle(Graphics gfx, Point start, Point end)
         {
             var SelectionRectangle = Utils.GetRectangleFromPoints(start, end);
             SelectionRectangle.Offset(-HScroll.Value, -VScroll.Value);
@@ -771,122 +771,52 @@ namespace InCoding.DList
             switch (e.KeyCode)
             {
                 case Keys.Up:
-                    HandleArrowUp(e.Modifiers);
-                    e.Handled = true;
+                    e.Handled = HandleKeyArrowUp(e.Modifiers);
                     break;
 
                 case Keys.Down:
-                    HandleArrowDown(e.Modifiers);
-                    e.Handled = true;
+                    e.Handled = HandleKeyArrowDown(e.Modifiers);
                     break;
 
                 case Keys.Left:
-                    HandleArrowLeft(e.Modifiers);
-                    e.Handled = true;
+                    e.Handled = HandleKeyArrowLeft(e.Modifiers);
                     break;
 
                 case Keys.Right:
-                    HandleArrowRight(e.Modifiers);
-                    e.Handled = true;
+                    e.Handled = HandleKeyArrowRight(e.Modifiers);
                     break;
 
                 case Keys.PageUp:
-                    ScrollPageUp();
-                    e.Handled = true;
+                    e.Handled = HandleKeyPageUp(e.Modifiers);
                     break;
 
                 case Keys.PageDown:
-                    ScrollPageDown();
-                    e.Handled = true;
+                    e.Handled = HandleKeyPageDown(e.Modifiers);
                     break;
 
                 case Keys.Home:
-                    if (Items.Count > 0)
-                    {
-                        ScrollToBegin();
-                        if (e.Shift) SelectRange(_FocusedItemIndex, 0, true);
-                        if (e.Control) FocusedItemIndex = 0;
-                    }
-                    e.Handled = true;
+                    e.Handled = HandleKeyHome(e.Modifiers);
                     break;
 
                 case Keys.End:
-                    if (Items.Count > 0)
-                    {
-                        ScrollToEnd();
-                        if (e.Shift) SelectRange(_FocusedItemIndex, Items.Count - 1, true);
-                        if (e.Control) FocusedItemIndex = Items.Count - 1;
-                    }
-                    e.Handled = true;
+                    e.Handled = HandleKeyEnd(e.Modifiers);
                     break;
 
                 case Keys.Space:
-                    HandleSpace(e.Modifiers);
-                    e.Handled = true;
+                    e.Handled = HandleKeySpace(e.Modifiers);
                     break;
 
                 case Keys.Delete:
-                    RemoveSelectedItems();
-                    e.Handled = true;
+                    e.Handled = HandleKeyDelete(e.Modifiers);
                     break;
 
                 case Keys.A:
-                    if (e.Modifiers.HasFlag(Keys.Control))
-                    {
-                        if (e.Modifiers.HasFlag(Keys.Shift))
-                        {
-                            SelectedItemIndices.Clear();
-                        }
-                        else
-                        {
-                            SelectAll();
-                        }
-
-                        e.Handled = true;
-                    }
+                    e.Handled = HandleKeyA(e.Modifiers);
                     break;
 #if DEBUG
 
                 case Keys.F12:
-                    int TotalColumnWidth = 0;
-
-                    foreach (var column in Columns)
-                    {
-                        TotalColumnWidth += column.Width;
-                    }
-
-                    var HeadersArea = new Rectangle(_ContentRectangle.X, _ContentRectangle.Y, TotalColumnWidth, ItemHeight);
-                    var ItemArea = new Rectangle(_ContentRectangle.X, HeadersArea.Bottom, TotalColumnWidth, Items.Count * ItemHeight);
-                    Console.WriteLine("-------------------------------------------------------------------------------");
-                    Console.WriteLine("| Right and bottom are the actual coordinates not the rectangle values.       |");
-                    Console.WriteLine("-------------------------------------------------------------------------------");
-                    Console.WriteLine("|               Content: {0} -> Right:{1}, Bottom:{2}", _ContentRectangle, _ContentRectangle.Right - 1, _ContentRectangle.Bottom - 1);
-                    Console.WriteLine("|               Headers: {0} -> Right:{1}, Bottom:{2}", HeadersArea, HeadersArea.Right - 1, HeadersArea.Bottom - 1);
-                    Console.WriteLine("|                 Items: {0} -> Right:{1}, Bottom:{2}", ItemArea, ItemArea.Right - 1, ItemArea.Bottom - 1);
-                    Console.WriteLine("|     SelectedItemCount: {0}", SelectedItemIndices.Count);
-                    Console.WriteLine("|     SelectedItemIndex: {0}", SelectedItemIndex);
-                    Console.WriteLine("|      FocusedItemIndex: {0}", FocusedItemIndex);
-                    Console.WriteLine("|          HotItemIndex: {0}", HotItemIndex);
-                    Console.WriteLine("|        HotHeaderIndex: {0}", HotHeaderIndex);
-                    Console.WriteLine("|    PressedHeaderIndex: {0}", PressedHeaderIndex);
-                    Console.WriteLine("| FirstVisibleItemIndex: {0}", GetFirstVisibleItemIndex());
-                    Console.WriteLine("|  LastVisibleItemIndex: {0}", GetLastVisibleItemIndex());
-                    Console.Write(    "|       SelectedIndices: ");
-
-                    if (SelectedItemIndices.Count >= 1)
-                    {
-                        Console.Write("{0}", SelectedItemIndices[0]);
-                    }
-
-                    for (int i = 1; i < SelectedItemIndices.Count; i++)
-                    {
-                        Console.Write(", {0}", SelectedItemIndices[i]);
-                    }
-
-                    Console.WriteLine();
-                    Console.WriteLine("-------------------------------------------------------------------------------");
-
-                    e.Handled = true;
+                    e.Handled = HandleKeyDebugF12(e.Modifiers);
                     break;
 #endif
             }
@@ -894,7 +824,174 @@ namespace InCoding.DList
             base.OnKeyDown(e);
         }
 
-        protected void HandleSpace(Keys modifiers)
+#if DEBUG
+        private bool HandleKeyDebugF12(Keys modifiers)
+        {
+            int TotalColumnWidth = 0;
+
+            foreach (var column in Columns)
+            {
+                TotalColumnWidth += column.Width;
+            }
+
+            var HeadersArea = new Rectangle(_ContentRectangle.X, _ContentRectangle.Y, TotalColumnWidth, ItemHeight);
+            var ItemArea = new Rectangle(_ContentRectangle.X, HeadersArea.Bottom, TotalColumnWidth, Items.Count * ItemHeight);
+            Console.WriteLine("-------------------------------------------------------------------------------");
+            Console.WriteLine("| Right and bottom are the actual coordinates not the rectangle values.       |");
+            Console.WriteLine("-------------------------------------------------------------------------------");
+            Console.WriteLine("|               Content: {0} -> Right:{1}, Bottom:{2}", _ContentRectangle, _ContentRectangle.Right - 1, _ContentRectangle.Bottom - 1);
+            Console.WriteLine("|               Headers: {0} -> Right:{1}, Bottom:{2}", HeadersArea, HeadersArea.Right - 1, HeadersArea.Bottom - 1);
+            Console.WriteLine("|                 Items: {0} -> Right:{1}, Bottom:{2}", ItemArea, ItemArea.Right - 1, ItemArea.Bottom - 1);
+            Console.WriteLine("|     SelectedItemCount: {0}", SelectedItemIndices.Count);
+            Console.WriteLine("|     SelectedItemIndex: {0}", SelectedItemIndex);
+            Console.WriteLine("|      FocusedItemIndex: {0}", FocusedItemIndex);
+            Console.WriteLine("|          HotItemIndex: {0}", HotItemIndex);
+            Console.WriteLine("|        HotHeaderIndex: {0}", HotHeaderIndex);
+            Console.WriteLine("|    PressedHeaderIndex: {0}", PressedHeaderIndex);
+            Console.WriteLine("| FirstVisibleItemIndex: {0}", GetFirstVisibleItemIndex());
+            Console.WriteLine("|  LastVisibleItemIndex: {0}", GetLastVisibleItemIndex());
+            Console.Write("|       SelectedIndices: ");
+
+            if (SelectedItemIndices.Count >= 1)
+            {
+                Console.Write("{0}", SelectedItemIndices[0]);
+            }
+
+            for (int i = 1; i < SelectedItemIndices.Count; i++)
+            {
+                Console.Write(", {0}", SelectedItemIndices[i]);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("-------------------------------------------------------------------------------");
+
+            return true;
+        }
+
+#endif
+        private bool HandleKeyA(Keys modifiers)
+        {
+            if (modifiers.HasFlag(Keys.Control))
+            {
+                if (modifiers.HasFlag(Keys.Shift))
+                {
+                    SelectedItemIndices.Clear();
+                }
+                else
+                {
+                    SelectAll();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool HandleKeyDelete(Keys modifiers)
+        {
+            RemoveSelectedItems();
+
+            return true;
+        }
+
+        private bool HandleKeyEnd(Keys modifiers)
+        {
+            if (Items.Count > 0 && (_FocusedItemIndex != Items.Count - 1))
+            {
+                ScrollToEnd();
+
+                if (modifiers.HasFlag(Keys.Shift))
+                {
+                    SelectRange(_FocusedItemIndex, Items.Count - 1, true);
+                }
+                else if (!modifiers.HasFlag(Keys.Control))
+                {
+                    Select(Items.Count - 1);
+                }
+
+                FocusedItemIndex = Items.Count - 1;
+            }
+
+            return true;
+        }
+
+        private bool HandleKeyHome(Keys modifiers)
+        {
+            if (Items.Count > 0 && (_FocusedItemIndex > 0))
+            {
+                ScrollToBegin();
+
+                if (modifiers.HasFlag(Keys.Shift))
+                {
+                    SelectRange(_FocusedItemIndex, 0, true);
+                }
+                else if (!modifiers.HasFlag(Keys.Control))
+                {
+                    Select(0);
+                }
+
+                FocusedItemIndex = 0;
+            }
+
+            return true;
+        }
+
+        private bool HandleKeyPageDown(Keys modifiers)
+        {
+            int LastVisibleItemIndex = GetLastVisibleItemIndex();
+            int OldFocusedItemIndex = _FocusedItemIndex;
+
+            if (_FocusedItemIndex == LastVisibleItemIndex)
+            {
+                ScrollPageDown();
+                LastVisibleItemIndex = GetLastVisibleItemIndex();
+            }
+
+            if (LastVisibleItemIndex == OldFocusedItemIndex) return true;   // End of the list reached.
+
+            if (modifiers.HasFlag(Keys.Shift) && (OldFocusedItemIndex != -1))
+            {
+                SelectRange(OldFocusedItemIndex, LastVisibleItemIndex, true);
+            }
+            else if (!modifiers.HasFlag(Keys.Control))
+            {
+                Select(LastVisibleItemIndex);
+            }
+
+            FocusedItemIndex = LastVisibleItemIndex;
+
+            return true;
+        }
+
+        private bool HandleKeyPageUp(Keys modifiers)
+        {
+            int FirstVisibleItemIndex = GetFirstVisibleItemIndex();
+            int OldFocusedItemIndex = _FocusedItemIndex;
+
+            if (_FocusedItemIndex == FirstVisibleItemIndex)
+            {
+                ScrollPageUp();
+                FirstVisibleItemIndex = GetFirstVisibleItemIndex();
+            }
+
+            if (FirstVisibleItemIndex == OldFocusedItemIndex) return true;   // Start of the list reached.
+
+            if (modifiers.HasFlag(Keys.Shift) && (OldFocusedItemIndex != -1))
+            {
+                SelectRange(OldFocusedItemIndex, FirstVisibleItemIndex, true);
+            }
+            else if (!modifiers.HasFlag(Keys.Control))
+            {
+                Select(FirstVisibleItemIndex);
+            }
+
+            FocusedItemIndex = FirstVisibleItemIndex;
+
+            return true;
+        }
+
+        private bool HandleKeySpace(Keys modifiers)
         {
             if (AllowMultipleSelectedItems)
             {
@@ -918,11 +1015,13 @@ namespace InCoding.DList
                     SelectedItemIndex = FocusedItemIndex;
                 }
             }
+
+            return true;
         }
 
-        protected void HandleArrowUp(Keys modifiers)
+        private bool HandleKeyArrowUp(Keys modifiers)
         {
-            if (Items.Count == 0) return;
+            if (Items.Count == 0) return true;
 
             int OldFocusedItemIndex = FocusedItemIndex;
 
@@ -959,11 +1058,13 @@ namespace InCoding.DList
             }
 
             EnsureItemVisibility(FocusedItemIndex);
+
+            return true;
         }
 
-        protected void HandleArrowDown(Keys modifiers)
+        private bool HandleKeyArrowDown(Keys modifiers)
         {
-            if (Items.Count == 0) return;
+            if (Items.Count == 0) return true;
 
             int OldFocusedItemIndex = FocusedItemIndex;
 
@@ -996,21 +1097,25 @@ namespace InCoding.DList
             }
 
             EnsureItemVisibility(FocusedItemIndex);
+
+            return true;
         }
 
-        protected void HandleArrowLeft(Keys modifiers)
+        private bool HandleKeyArrowLeft(Keys modifiers)
         {
-            if (Items.Count == 0 || !HScroll.Visible) return;
+            if (Items.Count == 0 || !HScroll.Visible) return true;
 
             if (HScroll.Value > HScroll.Minimum)
             {
                 HScroll.Value -= (HScroll.SmallChange > HScroll.Value) ? HScroll.Value : HScroll.SmallChange;
             }
+
+            return true;
         }
 
-        protected void HandleArrowRight(Keys modifiers)
+        private bool HandleKeyArrowRight(Keys modifiers)
         {
-            if (Items.Count == 0 || !HScroll.Visible) return;
+            if (Items.Count == 0 || !HScroll.Visible) return true;
 
             int MaxHScrollValue = HScroll.Maximum - HScroll.LargeChange;
 
@@ -1019,6 +1124,8 @@ namespace InCoding.DList
                 int RemainingHScrollSpace = MaxHScrollValue - HScroll.Value;
                 HScroll.Value += (HScroll.SmallChange > RemainingHScrollSpace) ? RemainingHScrollSpace : HScroll.SmallChange;
             }
+
+            return true;
         }
 
         #endregion
@@ -1547,6 +1654,22 @@ namespace InCoding.DList
             base.OnLostFocus(e);
         }
 
+        protected (Color, Color) GetCellColors(Column column, object item, object cellValue)
+        {
+            if (column.CellColorEvaluator != null)
+            {
+                return column.CellColorEvaluator(cellValue);
+            }
+            else if (ItemColorEvaluator != null)
+            {
+                return ItemColorEvaluator(item);
+            }
+            else
+            {
+                return (ForeColor, BackColor);
+            }
+        }
+
         private void CellEditorDone(object sender, CellEditorDoneEventArgs e)
         {
             if (e.Success)
@@ -1562,22 +1685,6 @@ namespace InCoding.DList
             ActiveCellEditor = null;
 
             Focus();
-        }
-
-        private (Color, Color) GetCellColors(Column column, object item, object cellValue)
-        {
-            if (column.CellColorEvaluator != null)
-            {
-                return column.CellColorEvaluator(cellValue);
-            }
-            else if (ItemColorEvaluator != null)
-            {
-                return ItemColorEvaluator(item);
-            }
-            else
-            {
-                return (ForeColor, BackColor);
-            }
         }
 
         #endregion

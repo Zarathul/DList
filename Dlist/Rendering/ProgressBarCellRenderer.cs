@@ -53,25 +53,24 @@ namespace InCoding.DList.Rendering
             int BarThickness = 0;
             Rectangle BarBounds;
             Rectangle ChunkBounds;
-            // Leave a 1 pixel wide border around the progressbar.
-            var Bounds = bounds;
-            Bounds.Inflate(-1, -1);
+
+            bounds.Inflate(-1, -1); // Leave a 1 pixel wide border around the progressbar.
 
             if (Horizontal)
             {
-                BarThickness = (int)Math.Floor(PercentageFactor * (Bounds.Width - 2));
-                BarThickness = Utils.Clamp(BarThickness, 0, Bounds.Width - 2);
-                BarBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1, BarThickness, Bounds.Height - 2);
-                ChunkBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1, ActualChunkThickness, Bounds.Height - 2);
-                ProgressBarRenderer.DrawHorizontalBar(gfx, Bounds);
+                BarThickness = (int)Math.Floor(PercentageFactor * (bounds.Width - 2));
+                BarThickness = Utils.Clamp(BarThickness, 0, bounds.Width - 2);
+                BarBounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, BarThickness, bounds.Height - 2);
+                ChunkBounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, ActualChunkThickness, bounds.Height - 2);
+                ProgressBarRenderer.DrawHorizontalBar(gfx, bounds);
             }
             else
             {
-                BarThickness = (int)Math.Floor(PercentageFactor * (Bounds.Height - 2));
-                BarThickness = Utils.Clamp(BarThickness, 0, Bounds.Height - 2);
-                BarBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1 + (Bounds.Height - 2 - BarThickness), Bounds.Width - 2, BarThickness);
-                ChunkBounds = new Rectangle(Bounds.Left + 1, Bounds.Top + 1 + (Bounds.Height - 2 - ActualChunkThickness), Bounds.Width - 2, ActualChunkThickness);
-                ProgressBarRenderer.DrawVerticalBar(gfx, Bounds);
+                BarThickness = (int)Math.Floor(PercentageFactor * (bounds.Height - 2));
+                BarThickness = Utils.Clamp(BarThickness, 0, bounds.Height - 2);
+                BarBounds = new Rectangle(bounds.Left + 1, bounds.Top + 1 + (bounds.Height - 2 - BarThickness), bounds.Width - 2, BarThickness);
+                ChunkBounds = new Rectangle(bounds.Left + 1, bounds.Top + 1 + (bounds.Height - 2 - ActualChunkThickness), bounds.Width - 2, ActualChunkThickness);
+                ProgressBarRenderer.DrawVerticalBar(gfx, bounds);
             }
 
             if (BarThickness == 0 && Value > MinValue)
