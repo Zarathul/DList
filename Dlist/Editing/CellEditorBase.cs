@@ -71,6 +71,8 @@ namespace InCoding.DList.Editing
 
         protected abstract object GetResultValue();
 
+        protected abstract void EditInternal(int columnIndex, int itemIndex, object value);
+
         protected void EditDone(bool success = true)
         {
             if (EditorControl != null)
@@ -82,10 +84,6 @@ namespace InCoding.DList.Editing
 
             var Args = new CellEditorDoneEventArgs(success, ColumnIndex, ItemIndex, GetResultValue());
             OnDone(Args);
-        }
-
-        protected virtual void EditInternal(int columnIndex, int itemIndex, object value)
-        {
         }
 
         protected virtual void PositionEditorControl(Rectangle bounds)

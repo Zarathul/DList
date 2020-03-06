@@ -74,7 +74,7 @@ namespace InCoding
             dList1.Columns.Add(Column3);
             dList1.Columns.Add(Column4);
 
-            dList1.ItemColorEvaluator = (item) => (((TestItem)item).NumericValue > 50) ? (Color.Black, Color.Gold) : (dList1.ForeColor, dList1.BackColor);
+            dList1.ItemColorEvaluator = (item) => (((TestItem)item).NumericValue > 50) ? (Color.Black, Color.Gold) : (Color.Empty, Color.Empty);
 
             // Progressbar test items
             var PTestItem0 = TestItem.GenerateRandomItem(0);

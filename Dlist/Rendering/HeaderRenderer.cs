@@ -16,71 +16,35 @@
 
 using System.Drawing;
 using System.Windows.Forms;
-using Styles = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
-    public class HeaderRenderer : CellRendererBase, IRenderer
+    public class HeaderRenderer : CellRendererBase, IHeaderRenderer
     {
-        public HeaderRenderer(ContentAlignment alignment = DefaultAlignment) : base(
-            new Styles.VisualStyleElement[] {
-            Styles.VisualStyleElement.Header.Item.Normal,
-            Styles.VisualStyleElement.Header.Item.Hot,
-            Styles.VisualStyleElement.Header.Item.Pressed },
-            alignment)
+        public HeaderRenderer(ContentAlignment alignment = DefaultAlignment) : base(alignment)
         {
         }
 
-        public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor, Font font)
+        public void Draw(Graphics gfx, Rectangle bounds, RenderState state, object value, Color foreColor, Color backColor,
+            Color separatorColor, Color reorderIndicatorColor, Font font)
         {
-            Color TextColor = Color.Empty;
+            var BackgroundBrush = GetBrush(backColor);
+            var SeparatorPen = GetPen(separatorColor);
 
-            if (Application.RenderWithVisualStyles && VsRenderer != null)
-            {
-                if (state.HasFlag(RenderState.Hot))
-                {
-                    VsRenderer.SetParameters(Styles.VisualStyleElement.Header.Item.Hot);
-                }
-                else if (state.HasFlag(RenderState.Pressed))
-                {
-                    VsRenderer.SetParameters(Styles.VisualStyleElement.Header.Item.Pressed);
-                }
-                else
-                {
-                    VsRenderer.SetParameters(Styles.VisualStyleElement.Header.Item.Normal);
-                }
-
-                VsRenderer.DrawBackground(gfx, bounds);
-                TextColor = VsRenderer.GetColor(Styles.ColorProperty.TextColor);
-            }
-            else
-            {
-                var BackgroundBrush = GetBrush((state.HasFlag(RenderState.Hot))
-                    ? SystemColors.HotTrack
-                    : (state.HasFlag(RenderState.Pressed)) ? SystemColors.Highlight : backColor);
-
-                gfx.FillRectangle(BackgroundBrush, bounds);
-                gfx.DrawLine(SystemPens.ControlDark, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
-            }
+            gfx.FillRectangle(BackgroundBrush, bounds);
+            gfx.DrawLine(SeparatorPen, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
 
             // Draw reorder indicator.
             if (state.HasFlag(RenderState.Focused))
             {
-                var IndicatorBrush = GetBrush(SystemColors.HotTrack);
+                var IndicatorBrush = GetBrush(reorderIndicatorColor);
                 var IndicatorRect = new Rectangle(bounds.Left, bounds.Bottom - 2, bounds.Width, 2);
                 gfx.FillRectangle(IndicatorBrush, IndicatorRect);
             }
 
-            // The VisualStyleRenderer does not center the text vertically with the correct TextFormatFlags, 
-            // so we draw it ourselves even if visual styles are on.
             if (value != null)
             {
-                if (TextColor.IsEmpty)
-                {
-                    TextColor = (state.HasFlag(RenderState.Normal)) ? foreColor : SystemColors.HighlightText;
-                }
-
-                TextRenderer.DrawText(gfx, value.ToString(), font, bounds, TextColor, TextFlags);
+                TextRenderer.DrawText(gfx, value.ToString(), font, bounds, foreColor, TextFlags);
             }
         }
     }

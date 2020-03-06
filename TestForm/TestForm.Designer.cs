@@ -620,7 +620,7 @@
             this.ClientSize = new System.Drawing.Size(967, 644);
             this.Controls.Add(this.splitContainer1);
             this.Name = "TestForm";
-            this.Text = "Form1";
+            this.Text = "Dlist TestForm";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeTo)).EndInit();

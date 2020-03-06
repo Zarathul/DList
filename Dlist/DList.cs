@@ -19,7 +19,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 using InCoding.DList.Collections;
 using InCoding.DList.Rendering;
@@ -46,6 +45,7 @@ namespace InCoding.DList
     {
         private bool _ShowGrid = true;
         private bool _IntegralHeight = false;
+        private bool _AllowMultipleSelectedItems = true;
         private int _ItemHeight = 28;
         private int _ResizeGripWidth = 10;
         private int _FocusedItemIndex = -1;
@@ -56,18 +56,35 @@ namespace InCoding.DList
         private int _PressedItemIndex = -1;
         private int _SelectionRectangleAlpha = 128;
         private int _ReorderColumnIndex = -1;
-        private Color _SelectedItemColor = SystemColors.Highlight;
-        private Color _HotItemColor = SystemColors.HotTrack;
+        
+        private Color _ItemForeColor = SystemColors.ControlText;
+        private Color _ItemForeColorHot = SystemColors.HighlightText;
+        private Color _ItemForeColorSelected = SystemColors.HighlightText;
+        private Color _ItemBackColor = SystemColors.Control;
+        private Color _ItemBackColorHot = SystemColors.HotTrack;
+        private Color _ItemBackColorSelected = SystemColors.Highlight;
+
+        private Color _HeaderForeColor = SystemColors.ControlText;
+        private Color _HeaderForeColorHot = SystemColors.InactiveCaptionText;
+        private Color _HeaderForeColorPressed = SystemColors.ActiveCaptionText;
+        private Color _HeaderBackColor = SystemColors.Control;
+        private Color _HeaderBackColorHot = SystemColors.InactiveCaption;
+        private Color _HeaderBackColorPressed = SystemColors.ActiveCaption;
+        private Color _HeaderSeparatorColor = SystemColors.ControlDark;
+        private Color _HeaderReorderIndicatorColor = SystemColors.HotTrack;
+
         private Color _GridColor = SystemColors.ControlDark;
-        private Color _HighlightTextColor = SystemColors.HighlightText;
         private Color _SelectionRectangleColor = SystemColors.HotTrack;
         private Color _SelectionRectangleBorderColor = SystemColors.HotTrack;
+        private Color _BorderColor = SystemColors.ControlDark;
         private Font _HeaderFont;
-        private IRenderer _HeaderRenderer = new HeaderRenderer();
+        private IHeaderRenderer _HeaderRenderer = new HeaderRenderer();
         private Func<object, (Color, Color)> _ItemColorEvaluator;
         private Pen _GridPen;
         private Pen _SelectionRectanglePen;
+        private Pen _BorderPen;
         private SolidBrush _SelectionRectangleBrush;
+        private SolidBrush _BackgroundBrush;
         private Rectangle _ContentRectangle;
 
         private bool IsFirstPaint = true;
@@ -98,16 +115,102 @@ namespace InCoding.DList
         [Category("Behavior")]
         public bool AllowColumnReordering { get; set; } = true;
 
-        [DefaultValue(typeof(Color), "Highlight")]
+        [Browsable(false)]
+        public override Color ForeColor { get; set; }
+
+        [DefaultValue(typeof(Color), "Control")]
         [Category("Appearance")]
-        public Color SelectedItemColor
+        public override Color BackColor
         {
-            get => _SelectedItemColor;
+            get => base.BackColor;
             set
             {
-                if (_SelectedItemColor != value)
+                if (base.BackColor != value)
                 {
-                    _SelectedItemColor = value;
+                    base.BackColor = value;
+
+                    _BackgroundBrush?.Dispose();
+                    _BackgroundBrush = new SolidBrush(value);
+
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "ControlDark")]
+        [Category("Appearance")]
+        public Color BorderColor
+        {
+            get => _BorderColor;
+            set
+            {
+                if (_BorderColor != value)
+                {
+                    _BorderColor = value;
+                    
+                    _BorderPen?.Dispose();
+                    _BorderPen = new Pen(value);
+
+                    Invalidate();
+                }
+            }
+        }
+        
+        [DefaultValue(typeof(Color), "ControlText")]
+        [Category("Appearance")]
+        public Color ItemForeColor
+        {
+            get => _ItemForeColor;
+            set
+            {
+                if (_ItemForeColor != value)
+                {
+                    _ItemForeColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "HighlightText")]
+        [Category("Appearance")]
+        public Color ItemForeColorHot
+        {
+            get => _ItemForeColorHot;
+            set
+            {
+                if (_ItemForeColorHot != value)
+                {
+                    _ItemForeColorHot = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "HighlightText")]
+        [Category("Appearance")]
+        public Color ItemForeColorSelected
+        {
+            get => _ItemForeColorSelected;
+            set
+            {
+                if (_ItemForeColorSelected != value)
+                {
+                    _ItemForeColorSelected = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "Control")]
+        [Category("Appearance")]
+        public Color ItemBackColor
+        {
+            get => _ItemBackColor;
+            set
+            {
+                if (_ItemBackColor != value)
+                {
+                    _ItemBackColor = value;
                     Invalidate();
                 }
             }
@@ -115,14 +218,149 @@ namespace InCoding.DList
 
         [DefaultValue(typeof(Color), "HotTrack")]
         [Category("Appearance")]
-        public Color HotItemColor
+        public Color ItemBackColorHot
         {
-            get => _HotItemColor;
+            get => _ItemBackColorHot;
             set
             {
-                if (_HotItemColor != value)
+                if (_ItemBackColorHot != value)
                 {
-                    _HotItemColor = value;
+                    _ItemBackColorHot = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "Highlight")]
+        [Category("Appearance")]
+        public Color ItemBackColorSelected
+        {
+            get => _ItemBackColorSelected;
+            set
+            {
+                if (_ItemBackColorSelected != value)
+                {
+                    _ItemBackColorSelected = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "ControlText")]
+        [Category("Appearance")]
+        public Color HeaderForeColor
+        {
+            get => _HeaderForeColor;
+            set
+            {
+                if (_HeaderForeColor != value)
+                {
+                    _HeaderForeColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "InactiveCaptionText")]
+        [Category("Appearance")]
+        public Color HeaderForeColorHot
+        {
+            get => _HeaderForeColorHot;
+            set
+            {
+                if (_HeaderForeColorHot != value)
+                {
+                    _HeaderForeColorHot = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "ActiveCaptionText")]
+        [Category("Appearance")]
+        public Color HeaderForeColorPressed
+        {
+            get => _HeaderForeColorPressed;
+            set
+            {
+                if (_HeaderForeColorPressed != value)
+                {
+                    _HeaderForeColorPressed = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "Control")]
+        [Category("Appearance")]
+        public Color HeaderBackColor
+        {
+            get => _HeaderBackColor;
+            set
+            {
+                if (_HeaderBackColor != value)
+                {
+                    _HeaderBackColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "InactiveCaption")]
+        [Category("Appearance")]
+        public Color HeaderBackColorHot
+        {
+            get => _HeaderBackColorHot;
+            set
+            {
+                if (_HeaderBackColorHot != value)
+                {
+                    _HeaderBackColorHot = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "ActiveCaption")]
+        [Category("Appearance")]
+        public Color HeaderBackColorPressed
+        {
+            get => _HeaderBackColorPressed;
+            set
+            {
+                if (_HeaderBackColorPressed != value)
+                {
+                    _HeaderBackColorPressed = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "ControlDark")]
+        [Category("Appearance")]
+        public Color HeaderSeparatorColor
+        {
+            get => _HeaderSeparatorColor;
+            set
+            {
+                if (_HeaderSeparatorColor != value)
+                {
+                    _HeaderSeparatorColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "HotTrack")]
+        [Category("Appearance")]
+        public Color HeaderReorderIndicatorColor
+        {
+            get => _HeaderReorderIndicatorColor;
+            set
+            {
+                if (_HeaderReorderIndicatorColor != value)
+                {
+                    _HeaderReorderIndicatorColor = value;
                     Invalidate();
                 }
             }
@@ -142,21 +380,6 @@ namespace InCoding.DList
                     _GridPen?.Dispose();
                     _GridPen = new Pen(value);
 
-                    Invalidate();
-                }
-            }
-        }
-
-        [DefaultValue(typeof(Color), "HighlightText")]
-        [Category("Appearance")]
-        public Color HighlightTextColor
-        {
-            get => _HighlightTextColor;
-            set
-            {
-                if (_HighlightTextColor != value)
-                {
-                    _HighlightTextColor = value;
                     Invalidate();
                 }
             }
@@ -272,16 +495,25 @@ namespace InCoding.DList
             get => _IntegralHeight;
             set
             {
-                if (Dock == DockStyle.None)
+                if ((_IntegralHeight != value) && (Dock == DockStyle.None))
                 {
                     _IntegralHeight = value;
+                    if (value) Height = CalculateIntegralHeight(Height);
                 }
             }
         }
 
         [DefaultValue(true)]
         [Category("Behavior")]
-        public bool AllowMultipleSelectedItems { get; set; } = true;
+        public bool AllowMultipleSelectedItems
+        {
+            get => this._AllowMultipleSelectedItems;
+            set
+            {
+                if (!value) SelectedItemIndices.Clear();
+                this._AllowMultipleSelectedItems = value;
+            }
+        }
 
         [Category("Data")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
@@ -376,7 +608,7 @@ namespace InCoding.DList
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IRenderer HeaderRenderer
+        public IHeaderRenderer HeaderRenderer
         {
             get => _HeaderRenderer;
             set
@@ -421,14 +653,15 @@ namespace InCoding.DList
                 }
             }
         }
-
-        protected VisualStyleRenderer VsRenderer { get; private set; }
         protected HScrollBar HScroll { get; }
         protected VScrollBar VScroll { get; }
 
         protected Pen GridPen { get => _GridPen; }
         protected Pen SelectionRectanglePen { get => _SelectionRectanglePen; }
+        protected Pen BorderPen { get => _BorderPen; }
+
         protected SolidBrush SelectionRectangleBrush { get => _SelectionRectangleBrush; }
+        protected SolidBrush BackgroundBrush { get => _BackgroundBrush; }
 
         protected override Size DefaultMinimumSize
         {
@@ -504,7 +737,9 @@ namespace InCoding.DList
             // Create initial pens and brushes
             _GridPen = new Pen(_GridColor);
             _SelectionRectanglePen = new Pen(_SelectionRectangleBorderColor);
+            _BorderPen = new Pen(_BorderColor);
             _SelectionRectangleBrush = new SolidBrush(Color.FromArgb(_SelectionRectangleAlpha, _SelectionRectangleColor));
+            _BackgroundBrush = new SolidBrush(BackColor);
         }
 
         #region Drawing
@@ -553,18 +788,10 @@ namespace InCoding.DList
 
         protected virtual Rectangle DrawBackground(Graphics gfx)
         {
-            if (SetVisualStyleRendererElement(VisualStyleElement.TextBox.TextEdit.Normal))
-            {
-                VsRenderer.DrawBackground(gfx, ClientRectangle);
+            gfx.FillRectangle(BackgroundBrush, ClientRectangle);
+            gfx.DrawRectangle(BorderPen, ClientRectangle.ToGDI()); // @GDI
 
-                return VsRenderer.GetBackgroundContentRectangle(gfx, ClientRectangle);
-            }
-            else
-            {
-                gfx.DrawRectangle(Pens.Black, ClientRectangle.ToGDI()); // @GDI
-
-                return new Rectangle(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
-            }
+            return new Rectangle(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
         }
 
         protected virtual void DrawHeaders(Graphics gfx)
@@ -585,9 +812,29 @@ namespace InCoding.DList
                     State |= RenderState.Focused;
                 }
 
-                var HeaderFont = column.HeaderFont ?? _HeaderFont ?? Font;
+                var HeaderFont = column.HeaderFont ?? this.HeaderFont ?? Font;
+                var ForegroundColor = Color.Empty;
+                var BackgroundColor = Color.Empty;
 
-                HeaderRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1), State, column.Name, ForeColor, BackColor, HeaderFont);
+                if (State.HasFlag(RenderState.Hot))
+                {
+                    ForegroundColor = HeaderForeColorHot;
+                    BackgroundColor = HeaderBackColorHot;
+                }
+                else if (State.HasFlag(RenderState.Pressed))
+                {
+                    ForegroundColor = HeaderForeColorPressed;
+                    BackgroundColor = HeaderBackColorPressed;
+                }
+                else
+                {
+                    ForegroundColor = HeaderForeColor;
+                    BackgroundColor = HeaderBackColor;
+                }
+
+                var HeaderBounds = (!ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1);
+
+                HeaderRenderer.Draw(gfx, HeaderBounds, State, column.Name, ForegroundColor, BackgroundColor, HeaderSeparatorColor, HeaderReorderIndicatorColor, HeaderFont);
 
                 Bounds.X += column.Width;
                 Index++;
@@ -611,37 +858,38 @@ namespace InCoding.DList
 
                     var Item = Items[x];
                     var CellValue = column.GetValue(Item);
-                    var State = ((AllowMultipleSelectedItems && SelectedItemIndices.Contains(x)) || SelectedItemIndex == x)
+                    var State = (HotItemIndex == x)
+                        ? RenderState.Hot
+                        : ((AllowMultipleSelectedItems && SelectedItemIndices.Contains(x)) || SelectedItemIndex == x)
                         ? RenderState.Selected
-                        : (HotItemIndex == x) ? RenderState.Hot : RenderState.Normal;
+                        : RenderState.Normal;
 
                     if (FocusedItemIndex == x)
                     {
                         State |= RenderState.Focused;
                     }
 
-                    var ForegroundColor = (State.HasFlag(RenderState.Normal)) ? Color.Empty : HighlightTextColor;
-                    var BackgroundColor = (State.HasFlag(RenderState.Selected))
-                        ? SelectedItemColor
-                        : (State.HasFlag(RenderState.Hot)) ? HotItemColor : Color.Empty;
+                    // SPEED: The ItemColorEvaluator is invoked for every cell if there is no CellColorEvaluator. Since drawing 
+                    // is done column by column instead of item by item, the only way to get around this would be to cache the 
+                    // ItemColorEvaluator results. This is not worth it unless the ItemColorEvaluator is very complex, which it
+                    // should not be to begin with.
+                    (Color ForegroundColor, Color BackgroundColor) = GetCellColors(column, Item, CellValue);
 
-                    if (ForegroundColor.IsEmpty || BackgroundColor.IsEmpty)
-                    {
-                        // SPEED: The ItemColorEvaluator is invoked for every cell if there is no CellColorEvaluator. Since drawing 
-                        // is done column by column instead of item by item, the only way to get around this would be to cache the 
-                        // ItemColorEvaluator results. This is not worth it unless the ItemColorEvaluator is very complex, which it
-                        // should not be to begin with.
-                        (Color Fore, Color Back) = GetCellColors(column, Item, CellValue);
+                    ForegroundColor = (State.HasFlag(RenderState.Hot))
+                        ? ItemForeColorHot
+                        : (State.HasFlag(RenderState.Selected)) ? ItemForeColorSelected
+                        : (ForegroundColor.IsEmpty) ? ItemForeColor : ForegroundColor;
 
-                        if (ForegroundColor.IsEmpty) ForegroundColor = Fore;
-                        if (BackgroundColor.IsEmpty) BackgroundColor = Back;
-                    }
+                    BackgroundColor = (State.HasFlag(RenderState.Hot))
+                        ? ItemBackColorHot
+                        : (State.HasFlag(RenderState.Selected)) ? ItemBackColorSelected
+                        : (BackgroundColor.IsEmpty) ? ItemBackColor : BackgroundColor;
 
                     var ItemFont = column.ItemFont ?? Font;
 
                     // ToGDI() is abused here to shrink the cells bounds if the grid is shown. Since the grid will always 
                     // occupy the rightmost and bottommost pixels of the cell, ToGDI() gets us exactly what we need.
-                    column.CellRenderer.Draw(gfx, (!_ShowGrid) ? Bounds : Bounds.ToGDI(), State, CellValue, ForegroundColor, BackgroundColor, ItemFont);
+                    column.CellRenderer.Draw(gfx, (!ShowGrid) ? Bounds : Bounds.ToGDI(), State, CellValue, ForegroundColor, BackgroundColor, ItemFont);
 
                     Bounds.Y += ItemHeight;
                 }
@@ -728,25 +976,6 @@ namespace InCoding.DList
 
             gfx.FillRectangle(SelectionRectangleBrush, SelectionRectangle);
             gfx.DrawRectangle(SelectionRectanglePen, SelectionRectangle.ToGDI());
-        }
-
-        protected bool SetVisualStyleRendererElement(VisualStyleElement element)
-        {
-            if (Application.RenderWithVisualStyles && VisualStyleRenderer.IsElementDefined(element))
-            {
-                if (VsRenderer == null)
-                {
-                    VsRenderer = new VisualStyleRenderer(element);
-                }
-                else
-                {
-                    VsRenderer.SetParameters(element);
-                }
-
-                return true;
-            }
-
-            return false;
         }
 
         #endregion
@@ -1629,16 +1858,7 @@ namespace InCoding.DList
 
             if (IntegralHeight && height > MinimumSize.Height)
             {
-                int ContentHeight = (HScroll.Visible) ? _ContentRectangle.Height + HScroll.Height + 2 : _ContentRectangle.Height;
-                // SetBoundsCore() can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
-                int BorderHeight = (_ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight : 0;
-
-                height = (ItemHeight * (int)Math.Floor(height / (double)ItemHeight)) + BorderHeight;
-
-                if (HScroll.Visible)
-                {
-                    height += HScroll.Height + 2;
-                }
+                height = CalculateIntegralHeight(height);
             }
 
             base.SetBoundsCore(x, y, width, height, specified);
@@ -1666,7 +1886,7 @@ namespace InCoding.DList
             }
             else
             {
-                return (ForeColor, BackColor);
+                return (Color.Empty, Color.Empty);
             }
         }
 
@@ -1697,7 +1917,9 @@ namespace InCoding.DList
             {
                 _GridPen?.Dispose();
                 _SelectionRectanglePen?.Dispose();
+                _BorderPen?.Dispose();
                 _SelectionRectangleBrush?.Dispose();
+                _BackgroundBrush?.Dispose();
             }
 
             base.Dispose(disposing);
@@ -1928,6 +2150,8 @@ namespace InCoding.DList
 
             if (Column.CanEdit)
             {
+                EnsureItemVisibility(itemIndex);
+
                 object Value = Column.GetValue(Items[itemIndex]);
                 var Editor = Column.CellEditor;
                 Editor.Done += CellEditorDone;
@@ -2093,6 +2317,22 @@ namespace InCoding.DList
             var IndicesToAdd = Enumerable.Range(FirstIndex, IndicesToAddCount);
 
             SelectedItemIndices.AddRange(IndicesToAdd);
+        }
+
+        private int CalculateIntegralHeight(int height)
+        {
+            int ContentHeight = (HScroll.Visible) ? _ContentRectangle.Height + HScroll.Height + 2 : _ContentRectangle.Height;
+            // SetBoundsCore(), and therefore this method, can and will get called before OnPaint() which means the ContentRectangle is empy at that time.
+            int BorderHeight = (_ContentRectangle.Height > 0) ? ClientRectangle.Height - ContentHeight : 0;
+
+            height = (ItemHeight * (int)Math.Floor(height / (double)ItemHeight)) + BorderHeight;
+
+            if (HScroll.Visible)
+            {
+                height += HScroll.Height + 2;
+            }
+
+            return height;
         }
     }
 }

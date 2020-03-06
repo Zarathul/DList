@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using Styles = System.Windows.Forms.VisualStyles;
 
 namespace InCoding.DList.Rendering
 {
@@ -42,44 +41,17 @@ namespace InCoding.DList.Rendering
         }
 
         public TextFormatFlags TextFlags { get; private set; }
-        public Styles.VisualStyleRenderer VsRenderer { get; private set; }
 
-        public CellRendererBase() : this(null, DefaultAlignment)
+        public CellRendererBase() : this(DefaultAlignment)
         {
         }
 
-        public CellRendererBase(ContentAlignment alignment) : this(null, alignment)
-        {
-        }
-
-        public CellRendererBase(IEnumerable<Styles.VisualStyleElement> requiredStyleElements) : this(requiredStyleElements, DefaultAlignment)
-        {
-        }
-
-        public CellRendererBase(IEnumerable<Styles.VisualStyleElement> requiredStyleElements, ContentAlignment alignment)
+        public CellRendererBase(ContentAlignment alignment)
         {
             Alignment = alignment;
 
             _PenCache = new Dictionary<Color, Pen>();
             _BrushCache = new Dictionary<Color, Brush>();
-
-            if (requiredStyleElements != null)
-            {
-                // Check if all required visual style elements are defined and create a renderer if they are.
-                Styles.VisualStyleElement Element = null;
-
-                foreach (var element in requiredStyleElements)
-                {
-                    if (!Styles.VisualStyleRenderer.IsElementDefined(element)) break;
-                    if (Element == null) Element = element;
-                }
-
-                if (Element != null) VsRenderer = new Styles.VisualStyleRenderer(Element);
-            }
-            else
-            {
-                VsRenderer = null;
-            }
         }
 
         protected Pen GetPen(Color color)
