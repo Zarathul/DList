@@ -1,3 +1,5 @@
+![Dlist](Readme/Dlist.png)
+
 #Mission statement
 Dlist aims to be a customizable, easy to use replacement for the standard .NET Framework ListView (in details mode), while avoiding the complexity of the DataGridView. This is achieved by not trying to cover every use case in existence and by keeping the object model very simple.
 
