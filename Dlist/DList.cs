@@ -1747,7 +1747,7 @@ namespace InCoding.DList
 
                 _ContentRectangle.Width -= (VScroll.Width + 2);
             }
-            else
+            else if (VScroll.Visible)
             {
                 VScroll.Minimum = 0;
                 VScroll.Maximum = 0;
@@ -1774,7 +1774,7 @@ namespace InCoding.DList
 
                 _ContentRectangle.Height -= (HScroll.Height + 2);
             }
-            else
+            else if (HScroll.Visible)
             {
                 HScroll.Minimum = 0;
                 HScroll.Maximum = 0;
