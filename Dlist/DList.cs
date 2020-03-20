@@ -90,6 +90,8 @@ namespace InCoding.DList
         private bool IsFirstPaint = true;
         private bool DoColumnResizeOnLeftMouseDown = false;
         private bool IsSelectedItemChangedEventActive = true;
+        private int LastClickTimestamp = 0;
+        private int LastClickedHeaderIndex = -1;
         private Point ItemSelectionStart = Point.Empty;
         private Point ItemSelectionEnd = Point.Empty;
         private ICellEditor ActiveCellEditor;
@@ -488,6 +490,14 @@ namespace InCoding.DList
         [Category("Layout")]
         public bool AllowColumnResize { get; set; } = true;
 
+        [DefaultValue(true)]
+        [Category("Layout")]
+        public bool AllowColumnAutoResize { get; set; } = true;
+
+        [DefaultValue(AutoResizeMode.OnlyVisibleItems)]
+        [Category("Layout")]
+        public AutoResizeMode ColumnAutoResizeMode { get; set; } = AutoResizeMode.OnlyVisibleItems;
+
         [DefaultValue(false)]
         [Category("Layout")]
         public bool IntegralHeight
@@ -687,6 +697,9 @@ namespace InCoding.DList
 
         [Category("Action")]
         public event EventHandler<HeaderClickEventArgs> HeaderClicked;
+
+        [Category("Action")]
+        public event EventHandler<HeaderClickEventArgs> HeaderDoubleClicked;
 
         [Category("Action")]
         public event EventHandler<CellClickEventArgs> CellClicked;
@@ -1367,10 +1380,10 @@ namespace InCoding.DList
             {
                 Focus();
 
-                if (HotHeaderIndex >= 0 && !DoColumnResizeOnLeftMouseDown)
+                if (HotHeaderIndex >= 0)
                 {
                     PressedHeaderIndex = HotHeaderIndex;
-                    HotHeaderIndex = -1;
+                    if (!DoColumnResizeOnLeftMouseDown) HotHeaderIndex = -1;
                 }
                 else
                 {
@@ -1401,6 +1414,7 @@ namespace InCoding.DList
             {
                 int CurrentHeaderIndex;
 
+                // Handle column reordering.
                 if (ReorderColumnIndex >= 0)    // Should only be >=0 if AllowColumnReorder is set to true.
                 {
                     if (ReorderColumnIndex != PressedHeaderIndex)
@@ -1418,10 +1432,34 @@ namespace InCoding.DList
                     CurrentHeaderIndex = GetColumnHeaderIndexAt(e.X, e.Y);
                 }
 
+                // Handle header clicking.
                 if (CurrentHeaderIndex == PressedHeaderIndex)
                 {
                     HotHeaderIndex = PressedHeaderIndex;
-                    OnHeaderClicked(new HeaderClickEventArgs(PressedHeaderIndex));
+
+                    // The bitwise AND shifts the range of the tick count to positive only at the cost of half the range (24'ish days).
+                    int TicksSinceLastClick = (Environment.TickCount & Int32.MaxValue) - LastClickTimestamp;
+
+                    if ((LastClickedHeaderIndex >= 0)
+                        && (LastClickedHeaderIndex == PressedHeaderIndex)
+                        && (TicksSinceLastClick <= SystemInformation.DoubleClickTime))
+                    {
+                        LastClickedHeaderIndex = -1;
+                        OnHeaderDoubleClicked(new HeaderClickEventArgs(PressedHeaderIndex));
+
+                        if (AllowColumnAutoResize && DoColumnResizeOnLeftMouseDown) AutoResizeColumn(CurrentHeaderIndex);
+                    }
+                    else
+                    {
+                        OnHeaderClicked(new HeaderClickEventArgs(PressedHeaderIndex));
+                        LastClickTimestamp = Environment.TickCount & Int32.MaxValue;
+                        LastClickedHeaderIndex = PressedHeaderIndex;
+                    }
+                }
+                else
+                {
+                    LastClickTimestamp = 0;
+                    LastClickedHeaderIndex = -1;
                 }
 
                 PressedHeaderIndex = -1;
@@ -1830,6 +1868,12 @@ namespace InCoding.DList
         protected void OnHeaderClicked(HeaderClickEventArgs args)
         {
             var Handler = HeaderClicked;
+            Handler?.Invoke(this, args);
+        }
+
+        protected void OnHeaderDoubleClicked(HeaderClickEventArgs args)
+        {
+            var Handler = HeaderDoubleClicked;
             Handler?.Invoke(this, args);
         }
 
@@ -2317,6 +2361,48 @@ namespace InCoding.DList
             var IndicesToAdd = Enumerable.Range(FirstIndex, IndicesToAddCount);
 
             SelectedItemIndices.AddRange(IndicesToAdd);
+        }
+
+        private void AutoResizeColumn(int index)
+        {
+            if (Items.Count <= 0) return;
+
+            int FirstIndex = 0;
+            int LastIndex = 0;
+
+            switch (ColumnAutoResizeMode)
+            {
+                case AutoResizeMode.AllItems:
+                    FirstIndex = 0;
+                    LastIndex = Items.Count - 1;
+                    break;
+                
+                case AutoResizeMode.OnlyVisibleItems:
+                    FirstIndex = GetFirstVisibleItemIndex();
+                    LastIndex = GetLastVisibleItemIndex();
+                    break;
+                
+                default:
+                    return;
+            }
+
+            Column ResizingColumn = Columns[index];
+            IRenderer Renderer = ResizingColumn.CellRenderer;
+            Font ItemFont = ResizingColumn.ItemFont ?? Font;
+            int OptimalWidth = -1;
+            int CurrentOptimalWidth = -1;
+            object Value = null;
+
+            for (int i = FirstIndex; i <= LastIndex; i++)
+            {
+                Value = ResizingColumn.GetValue(Items[i]);
+                CurrentOptimalWidth = Renderer.GetOptimalWidth(Value, ItemFont);
+                if (CurrentOptimalWidth < 0) return;    // Early out if IRenderers do not provide an optimal width.
+                
+                OptimalWidth = Math.Max(OptimalWidth, CurrentOptimalWidth);
+            }
+
+            if (OptimalWidth > 0) ResizingColumn.Width = (_ShowGrid) ? OptimalWidth + 1 : OptimalWidth;
         }
 
         private int CalculateIntegralHeight(int height)

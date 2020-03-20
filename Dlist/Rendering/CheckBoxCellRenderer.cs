@@ -42,5 +42,10 @@ namespace InCoding.DList.Rendering
                 CheckBoxRenderer.DrawCheckBox(gfx, AlignedCheckboxRectangle.Location, CheckBoxDrawState);
             }
         }
+
+        public int GetOptimalWidth(object value, Font font)
+        {
+            return -1;
+        }
     }
 }

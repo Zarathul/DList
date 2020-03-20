@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CellClickEventArgs.cs" />
+    <Compile Include="AutoResizeMode.cs" />
     <Compile Include="Collections\ItemPropertyChangedEventArgs.cs" />
     <Compile Include="Collections\NotifyingCollection.cs" />
     <Compile Include="Collections\NotifyingCollectionChangedEventArgs.cs" />

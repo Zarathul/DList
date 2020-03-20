@@ -37,5 +37,11 @@ namespace InCoding.DList.Rendering
                 TextRenderer.DrawText(gfx, (Format != null) ? string.Format(Format, value) : value.ToString(), font, bounds, foreColor, TextFlags);
             }
         }
+
+        public int GetOptimalWidth(object value, Font font)
+        {
+            string Text = (Format != null) ? string.Format(Format, value) : value.ToString();
+            return TextRenderer.MeasureText(Text, font, new Size(int.MaxValue, int.MaxValue), TextFlags).Width;
+        }
     }
 }

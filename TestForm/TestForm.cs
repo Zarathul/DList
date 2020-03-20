@@ -210,6 +210,15 @@ namespace InCoding
             listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
         }
 
+        private void dList1_HeaderDoubleClicked(object sender, HeaderClickEventArgs e)
+        {
+            if (!checkBoxHeaderDoubleClicked.Checked) return;
+
+            string Entry = String.Format("HeaderDoubleClicked >> ColumnIndex: {0}", e.Index);
+            listBoxEvents.Items.Add(Entry);
+            listBoxEvents.TopIndex = listBoxEvents.Items.Count - 1;
+        }
+
         private void DList1SelectedItemsChanged(object sender, EventArgs e)
         {
             if (!checkBoxSelectedItemsChanged.Checked) return;

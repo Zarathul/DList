@@ -73,6 +73,7 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.dList1 = new InCoding.DList.DList();
+            this.checkBoxHeaderDoubleClicked = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeTo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSelectRangeFrom)).BeginInit();
@@ -333,6 +334,7 @@
             // 
             // tabPage4
             // 
+            this.tabPage4.Controls.Add(this.checkBoxHeaderDoubleClicked);
             this.tabPage4.Controls.Add(this.checkBoxSelectedIndicesChanged);
             this.tabPage4.Controls.Add(this.checkBoxSelectedIndicesChanging);
             this.tabPage4.Controls.Add(this.checkBoxItemChanged);
@@ -354,19 +356,19 @@
             // 
             // checkBoxSelectedIndicesChanged
             // 
-            this.checkBoxSelectedIndicesChanged.Location = new System.Drawing.Point(6, 236);
+            this.checkBoxSelectedIndicesChanged.Location = new System.Drawing.Point(6, 259);
             this.checkBoxSelectedIndicesChanged.Name = "checkBoxSelectedIndicesChanged";
             this.checkBoxSelectedIndicesChanged.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxSelectedIndicesChanged.TabIndex = 17;
+            this.checkBoxSelectedIndicesChanged.TabIndex = 11;
             this.checkBoxSelectedIndicesChanged.Text = "Selected indices changed";
             this.checkBoxSelectedIndicesChanged.UseVisualStyleBackColor = true;
             // 
             // checkBoxSelectedIndicesChanging
             // 
-            this.checkBoxSelectedIndicesChanging.Location = new System.Drawing.Point(6, 213);
+            this.checkBoxSelectedIndicesChanging.Location = new System.Drawing.Point(6, 236);
             this.checkBoxSelectedIndicesChanging.Name = "checkBoxSelectedIndicesChanging";
             this.checkBoxSelectedIndicesChanging.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxSelectedIndicesChanging.TabIndex = 16;
+            this.checkBoxSelectedIndicesChanging.TabIndex = 10;
             this.checkBoxSelectedIndicesChanging.Text = "Selected indices changing";
             this.checkBoxSelectedIndicesChanging.UseVisualStyleBackColor = true;
             // 
@@ -374,10 +376,10 @@
             // 
             this.checkBoxItemChanged.Checked = true;
             this.checkBoxItemChanged.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxItemChanged.Location = new System.Drawing.Point(6, 190);
+            this.checkBoxItemChanged.Location = new System.Drawing.Point(6, 213);
             this.checkBoxItemChanged.Name = "checkBoxItemChanged";
             this.checkBoxItemChanged.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxItemChanged.TabIndex = 15;
+            this.checkBoxItemChanged.TabIndex = 9;
             this.checkBoxItemChanged.Text = "Item changed";
             this.checkBoxItemChanged.UseVisualStyleBackColor = true;
             // 
@@ -385,19 +387,19 @@
             // 
             this.checkBoxItemsChanged.Checked = true;
             this.checkBoxItemsChanged.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxItemsChanged.Location = new System.Drawing.Point(6, 167);
+            this.checkBoxItemsChanged.Location = new System.Drawing.Point(6, 190);
             this.checkBoxItemsChanged.Name = "checkBoxItemsChanged";
             this.checkBoxItemsChanged.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxItemsChanged.TabIndex = 14;
+            this.checkBoxItemsChanged.TabIndex = 8;
             this.checkBoxItemsChanged.Text = "Items changed";
             this.checkBoxItemsChanged.UseVisualStyleBackColor = true;
             // 
             // checkBoxItemsChanging
             // 
-            this.checkBoxItemsChanging.Location = new System.Drawing.Point(6, 144);
+            this.checkBoxItemsChanging.Location = new System.Drawing.Point(6, 167);
             this.checkBoxItemsChanging.Name = "checkBoxItemsChanging";
             this.checkBoxItemsChanging.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxItemsChanging.TabIndex = 13;
+            this.checkBoxItemsChanging.TabIndex = 7;
             this.checkBoxItemsChanging.Text = "Items changing";
             this.checkBoxItemsChanging.UseVisualStyleBackColor = true;
             // 
@@ -405,10 +407,10 @@
             // 
             this.checkBoxColumnChanged.Checked = true;
             this.checkBoxColumnChanged.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxColumnChanged.Location = new System.Drawing.Point(6, 121);
+            this.checkBoxColumnChanged.Location = new System.Drawing.Point(6, 144);
             this.checkBoxColumnChanged.Name = "checkBoxColumnChanged";
             this.checkBoxColumnChanged.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxColumnChanged.TabIndex = 12;
+            this.checkBoxColumnChanged.TabIndex = 6;
             this.checkBoxColumnChanged.Text = "Column changed";
             this.checkBoxColumnChanged.UseVisualStyleBackColor = true;
             // 
@@ -416,19 +418,19 @@
             // 
             this.checkBoxColumnsChanged.Checked = true;
             this.checkBoxColumnsChanged.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxColumnsChanged.Location = new System.Drawing.Point(6, 98);
+            this.checkBoxColumnsChanged.Location = new System.Drawing.Point(6, 121);
             this.checkBoxColumnsChanged.Name = "checkBoxColumnsChanged";
             this.checkBoxColumnsChanged.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxColumnsChanged.TabIndex = 11;
+            this.checkBoxColumnsChanged.TabIndex = 5;
             this.checkBoxColumnsChanged.Text = "Columns changed";
             this.checkBoxColumnsChanged.UseVisualStyleBackColor = true;
             // 
             // checkBoxColumnsChanging
             // 
-            this.checkBoxColumnsChanging.Location = new System.Drawing.Point(6, 75);
+            this.checkBoxColumnsChanging.Location = new System.Drawing.Point(6, 98);
             this.checkBoxColumnsChanging.Name = "checkBoxColumnsChanging";
             this.checkBoxColumnsChanging.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxColumnsChanging.TabIndex = 10;
+            this.checkBoxColumnsChanging.TabIndex = 4;
             this.checkBoxColumnsChanging.Text = "Columns changing";
             this.checkBoxColumnsChanging.UseVisualStyleBackColor = true;
             // 
@@ -436,10 +438,10 @@
             // 
             this.checkBoxSelectedItemsChanged.Checked = true;
             this.checkBoxSelectedItemsChanged.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxSelectedItemsChanged.Location = new System.Drawing.Point(6, 52);
+            this.checkBoxSelectedItemsChanged.Location = new System.Drawing.Point(6, 75);
             this.checkBoxSelectedItemsChanged.Name = "checkBoxSelectedItemsChanged";
             this.checkBoxSelectedItemsChanged.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxSelectedItemsChanged.TabIndex = 9;
+            this.checkBoxSelectedItemsChanged.TabIndex = 3;
             this.checkBoxSelectedItemsChanged.Text = "SelectedItemsChanged";
             this.checkBoxSelectedItemsChanged.UseVisualStyleBackColor = true;
             // 
@@ -447,10 +449,10 @@
             // 
             this.checkBoxCellClicked.Checked = true;
             this.checkBoxCellClicked.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxCellClicked.Location = new System.Drawing.Point(6, 29);
+            this.checkBoxCellClicked.Location = new System.Drawing.Point(6, 52);
             this.checkBoxCellClicked.Name = "checkBoxCellClicked";
             this.checkBoxCellClicked.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxCellClicked.TabIndex = 8;
+            this.checkBoxCellClicked.TabIndex = 2;
             this.checkBoxCellClicked.Text = "CellClicked";
             this.checkBoxCellClicked.UseVisualStyleBackColor = true;
             // 
@@ -461,7 +463,7 @@
             this.checkBoxHeaderClicked.Location = new System.Drawing.Point(6, 6);
             this.checkBoxHeaderClicked.Name = "checkBoxHeaderClicked";
             this.checkBoxHeaderClicked.Size = new System.Drawing.Size(151, 17);
-            this.checkBoxHeaderClicked.TabIndex = 7;
+            this.checkBoxHeaderClicked.TabIndex = 0;
             this.checkBoxHeaderClicked.Text = "HeaderClicked";
             this.checkBoxHeaderClicked.UseVisualStyleBackColor = true;
             // 
@@ -610,8 +612,20 @@
             this.dList1.TabIndex = 3;
             this.dList1.Text = "dList1";
             this.dList1.HeaderClicked += new System.EventHandler<InCoding.DList.HeaderClickEventArgs>(this.DList1HeaderClicked);
+            this.dList1.HeaderDoubleClicked += new System.EventHandler<InCoding.DList.HeaderClickEventArgs>(this.dList1_HeaderDoubleClicked);
             this.dList1.CellClicked += new System.EventHandler<InCoding.DList.CellClickEventArgs>(this.DList1CellClicked);
             this.dList1.SelectedItemsChanged += new System.EventHandler(this.DList1SelectedItemsChanged);
+            // 
+            // checkBoxHeaderDoubleClicked
+            // 
+            this.checkBoxHeaderDoubleClicked.Checked = true;
+            this.checkBoxHeaderDoubleClicked.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxHeaderDoubleClicked.Location = new System.Drawing.Point(6, 29);
+            this.checkBoxHeaderDoubleClicked.Name = "checkBoxHeaderDoubleClicked";
+            this.checkBoxHeaderDoubleClicked.Size = new System.Drawing.Size(151, 17);
+            this.checkBoxHeaderDoubleClicked.TabIndex = 1;
+            this.checkBoxHeaderDoubleClicked.Text = "HeaderDoubleClicked";
+            this.checkBoxHeaderDoubleClicked.UseVisualStyleBackColor = true;
             // 
             // TestForm
             // 
@@ -690,6 +704,7 @@
         private System.Windows.Forms.CheckBox checkBoxColumnChanged;
         private System.Windows.Forms.CheckBox checkBoxColumnsChanged;
         private System.Windows.Forms.CheckBox checkBoxColumnsChanging;
+        private System.Windows.Forms.CheckBox checkBoxHeaderDoubleClicked;
     }
 }
 

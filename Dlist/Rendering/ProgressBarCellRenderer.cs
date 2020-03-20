@@ -120,5 +120,10 @@ namespace InCoding.DList.Rendering
                 }
             }
         }
+
+        public int GetOptimalWidth(object value, Font font)
+        {
+            return -1;
+        }
     }
 }
