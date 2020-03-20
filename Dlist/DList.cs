@@ -60,14 +60,14 @@ namespace InCoding.DList
         private Color _ItemForeColor = SystemColors.ControlText;
         private Color _ItemForeColorHot = SystemColors.HighlightText;
         private Color _ItemForeColorSelected = SystemColors.HighlightText;
-        private Color _ItemBackColor = SystemColors.Control;
+        private Color _ItemBackColor = SystemColors.ControlLightLight;
         private Color _ItemBackColorHot = SystemColors.HotTrack;
         private Color _ItemBackColorSelected = SystemColors.Highlight;
 
         private Color _HeaderForeColor = SystemColors.ControlText;
         private Color _HeaderForeColorHot = SystemColors.InactiveCaptionText;
         private Color _HeaderForeColorPressed = SystemColors.ActiveCaptionText;
-        private Color _HeaderBackColor = SystemColors.Control;
+        private Color _HeaderBackColor = SystemColors.ControlLight;
         private Color _HeaderBackColorHot = SystemColors.InactiveCaption;
         private Color _HeaderBackColorPressed = SystemColors.ActiveCaption;
         private Color _HeaderSeparatorColor = SystemColors.ControlDark;
@@ -201,7 +201,7 @@ namespace InCoding.DList
             }
         }
 
-        [DefaultValue(typeof(Color), "Control")]
+        [DefaultValue(typeof(Color), "ControlLightLight")]
         [Category("Appearance")]
         public Color ItemBackColor
         {
@@ -291,7 +291,7 @@ namespace InCoding.DList
             }
         }
 
-        [DefaultValue(typeof(Color), "Control")]
+        [DefaultValue(typeof(Color), "ControlLight")]
         [Category("Appearance")]
         public Color HeaderBackColor
         {
