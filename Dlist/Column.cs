@@ -26,6 +26,7 @@ namespace InCoding.DList
     public class Column : INotifyPropertyChanged
     {
         private string _Name = "Column";
+        private bool _Visible = true;
         private int _Width = 80;
         private Font _HeaderFont;
         private Font _ItemFont;
@@ -42,6 +43,13 @@ namespace InCoding.DList
         {
             get => _Name;
             set => Utils.CheckPropertyChanged(nameof(Name), ref _Name, ref value, OnPropertyChanged);
+        }
+
+        [DefaultValue(true)]
+        public bool Visible
+        {
+            get => _Visible;
+            set => Utils.CheckPropertyChanged(nameof(Visible), ref _Visible, ref value, OnPropertyChanged);
         }
 
         [DefaultValue(80)]
@@ -120,9 +128,10 @@ namespace InCoding.DList
         
         #endregion
 
-        public Column(string name) : this()
+        public Column(string name, bool visible = true) : this()
         {
-            Name = name;
+            _Name = name;
+            _Visible = visible;
         }
 
         public Column()

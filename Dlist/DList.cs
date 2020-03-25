@@ -810,11 +810,13 @@ namespace InCoding.DList
         protected virtual void DrawHeaders(Graphics gfx)
         {
             var Bounds = new Rectangle(_ContentRectangle.Left - HScroll.Value, _ContentRectangle.Top, 0, ItemHeight);
-            int Index = 0;
+            int Index = -1;
             RenderState State;
 
             foreach (var column in Columns)
             {
+                Index++;
+                if (!column.Visible) continue;
                 if (Bounds.X >= _ContentRectangle.Right) break;
 
                 Bounds.Width = column.Width;
@@ -850,7 +852,6 @@ namespace InCoding.DList
                 HeaderRenderer.Draw(gfx, HeaderBounds, State, column.Name, ForegroundColor, BackgroundColor, HeaderSeparatorColor, HeaderReorderIndicatorColor, HeaderFont);
 
                 Bounds.X += column.Width;
-                Index++;
             }
         }
 
@@ -860,6 +861,7 @@ namespace InCoding.DList
 
             foreach (var column in Columns)
             {
+                if (!column.Visible) continue;
                 if (Bounds.X > _ContentRectangle.Right) break;
 
                 Bounds.Width = column.Width;
@@ -925,6 +927,7 @@ namespace InCoding.DList
                 // Vertical grid lines.
                 foreach (var column in Columns)
                 {
+                    if (!column.Visible) continue;
                     TotalColumnWidth += column.Width;
                     X += column.Width;
                     gfx.DrawLine(GridPen, X, Y1, X, Y2);
@@ -934,6 +937,7 @@ namespace InCoding.DList
             {
                 foreach (var column in Columns)
                 {
+                    if (!column.Visible) continue;
                     TotalColumnWidth += column.Width;
                 }
             }
@@ -962,24 +966,25 @@ namespace InCoding.DList
 
         protected virtual void DrawFocusRectangle(Graphics gfx)
         {
-            var ItemPos = new Point(_ContentRectangle.X, _ContentRectangle.Y - VScroll.Value + (FocusedItemIndex + 1) * ItemHeight);
-            var ItemSize= new Size(0, ItemHeight);
+            var FocusPos = new Point(_ContentRectangle.X, _ContentRectangle.Y - VScroll.Value + (FocusedItemIndex + 1) * ItemHeight);
+            var FocusSize = new Size(0, ItemHeight);
 
             foreach (var column in Columns)
             {
-                ItemSize.Width += column.Width;
+                if (!column.Visible) continue;
+                FocusSize.Width += column.Width;
             }
 
             // The grid, if drawn, occupies space in the cell. The most right and most bottom pixels.
             // Because of this the focus rectangle is drawn 1 pixel smaller if the grid is rendered.
             if (ShowGrid)
             {
-                ItemSize.Width--;
-                ItemSize.Height--;
+                FocusSize.Width--;
+                FocusSize.Height--;
             }
 
-            var Bounds = new Rectangle(ItemPos, ItemSize);
-            ControlPaint.DrawFocusRectangle(gfx, Bounds);
+            var FocusBounds = new Rectangle(FocusPos, FocusSize);
+            ControlPaint.DrawFocusRectangle(gfx, FocusBounds);
         }
 
         protected virtual void DrawSelectionRectangle(Graphics gfx, Point start, Point end)
@@ -1073,6 +1078,7 @@ namespace InCoding.DList
 
             foreach (var column in Columns)
             {
+                if (!column.Visible) continue;
                 TotalColumnWidth += column.Width;
             }
 
@@ -1564,10 +1570,14 @@ namespace InCoding.DList
                     if (HotHeaderIndex >= 0)
                     {
                         int RightColumnEdge = _ContentRectangle.X;
+                        Column CurrentColumn;
 
                         for (int i = 0; i <= HotHeaderIndex; i++)
                         {
-                            RightColumnEdge += Columns[i].Width;
+                            CurrentColumn = Columns[i];
+                            if (!CurrentColumn.Visible) continue;
+                            
+                            RightColumnEdge += CurrentColumn.Width;
                         }
 
                         RightColumnEdge--;
@@ -1599,9 +1609,13 @@ namespace InCoding.DList
                 if (DoColumnResizeOnLeftMouseDown)
                 {
                     int RightColumnEdge = _ContentRectangle.X;
+                    Column CurrentColumn;
 
                     for (int i = 0; i <= HotHeaderIndex; i++)
                     {
+                        CurrentColumn = Columns[i];
+                        if (!CurrentColumn.Visible) continue;
+                        
                         RightColumnEdge += Columns[i].Width;
                     }
 
@@ -1798,6 +1812,7 @@ namespace InCoding.DList
 
             foreach (var column in Columns)
             {
+                if (!column.Visible) continue;
                 TotalContentWidth += column.Width;
             }
 
@@ -1982,6 +1997,7 @@ namespace InCoding.DList
 
             foreach (var column in Columns)
             {
+                if (!column.Visible) continue;
                 LastColumnRight += column.Width;
             }
 
@@ -2011,15 +2027,15 @@ namespace InCoding.DList
 
             int ScrolledX = x + HScroll.Value;
             int Right = _ContentRectangle.X;
-            int Index = 0;
+            int Index = -1;
 
             foreach (var column in Columns)
             {
-                Right += column.Width;
-
-                if (ScrolledX < Right) return Index;
-
                 Index++;
+                if (!column.Visible) continue;
+                
+                Right += column.Width;
+                if (ScrolledX < Right) return Index;
             }
 
             return -1;
@@ -2041,18 +2057,24 @@ namespace InCoding.DList
 
         public Rectangle GetCellBounds(int columnIndex, int itemIndex)
         {
-            if (columnIndex < 0) throw new ArgumentException("Index is less than zero.", nameof(columnIndex));
+            if (columnIndex < 0) throw new ArgumentOutOfRangeException("Index is less than zero.", nameof(columnIndex));
             if (columnIndex > Columns.Count - 1) throw new ArgumentOutOfRangeException(nameof(columnIndex));
-            if (itemIndex < 0) throw new ArgumentException("Index is less than zero.", nameof(itemIndex));
+            if (itemIndex < 0) throw new ArgumentOutOfRangeException("Index is less than zero.", nameof(itemIndex));
             if (itemIndex > Items.Count - 1) throw new ArgumentOutOfRangeException(nameof(itemIndex));
 
             if (Items.Count <= 0) return Rectangle.Empty;
 
-            var Bounds = new Rectangle(_ContentRectangle.X, _ContentRectangle.Y + ItemHeight, Columns[columnIndex].Width, ItemHeight);
+            var CurrentColumn = Columns[columnIndex];
+            if (!CurrentColumn.Visible) return Rectangle.Empty;
+
+            var Bounds = new Rectangle(_ContentRectangle.X, _ContentRectangle.Y + ItemHeight, CurrentColumn.Width, ItemHeight);
 
             for (int i = 0; i < columnIndex; i++)
             {
-                Bounds.X += Columns[i].Width;
+                CurrentColumn = Columns[i];
+                if (!CurrentColumn.Visible) continue;
+                
+                Bounds.X += CurrentColumn.Width;
             }
 
             for (int i = 0; i < itemIndex; i++)
@@ -2089,13 +2111,20 @@ namespace InCoding.DList
         {
             if (columnIndex < 0 || Columns.Count == 0 || columnIndex >= Columns.Count) return;
 
+            var CurrentColumn = Columns[columnIndex];
+            if (!CurrentColumn.Visible) return;
+
             int ColumnLeft = 0;
             int ColumnRight = 0;
 
             for (int i = 0; i <= columnIndex; i++)
             {
                 ColumnLeft = ColumnRight;
-                ColumnRight += Columns[i].Width;
+                
+                CurrentColumn = Columns[i];
+                if (!CurrentColumn.Visible) continue;
+
+                ColumnRight += CurrentColumn.Width;
             }
 
             ColumnRight--;
@@ -2192,7 +2221,7 @@ namespace InCoding.DList
 
             var Column = Columns[columnIndex];
 
-            if (Column.CanEdit)
+            if (Column.CanEdit && Column.Visible)
             {
                 EnsureItemVisibility(itemIndex);
 
@@ -2288,6 +2317,7 @@ namespace InCoding.DList
 
                             foreach (var column in Columns)
                             {
+                                if (!column.Visible) continue;
                                 RightEdge += column.Width;
 
                                 if (Selection.X < RightEdge)
