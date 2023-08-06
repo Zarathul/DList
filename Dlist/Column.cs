@@ -23,9 +23,11 @@ using InCoding.DList.Editing;
 
 namespace InCoding.DList
 {
-    public class Column : INotifyPropertyChanged
+    [DesignTimeVisible(false)]
+    public class Column : Component, INotifyPropertyChanged
     {
-        private string _Name = "Column";
+        private string _Text = "Column";
+        private string _Name = "";
         private bool _Visible = true;
         private int _Width = 80;
         private Font _HeaderFont;
@@ -39,10 +41,23 @@ namespace InCoding.DList
         #region Properties
 
         [DefaultValue("Column")]
+        public string Text
+        {
+            get => _Text;
+            set => Utils.CheckPropertyChanged(nameof(Text), ref _Text, ref value, OnPropertyChanged);
+        }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public string Name
         {
-            get => _Name;
-            set => Utils.CheckPropertyChanged(nameof(Name), ref _Name, ref value, OnPropertyChanged);
+            get
+            {
+                if (base.Site != null) { _Name = base.Site.Name; }
+                return _Name;
+            }
+
+            set { _Name = value; }
         }
 
         [DefaultValue(true)]
@@ -128,9 +143,9 @@ namespace InCoding.DList
         
         #endregion
 
-        public Column(string name, bool visible = true) : this()
+        public Column(string text, bool visible = true) : this()
         {
-            _Name = name;
+            _Text = text;
             _Visible = visible;
         }
 
@@ -167,7 +182,7 @@ namespace InCoding.DList
 
         public override string ToString()
         {
-            return _Name;
+            return _Text;
         }
     }
 }

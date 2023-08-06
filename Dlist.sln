@@ -1,11 +1,11 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlist", "Dlist\Dlist.csproj", "{0972EC38-2C49-4822-B0F4-FA1654207587}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dlist", "Dlist\Dlist.csproj", "{0972EC38-2C49-4822-B0F4-FA1654207587}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestForm", "TestForm\TestForm.csproj", "{4BD33BD9-00CF-4B27-A1FB-2DC4A0E505AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestForm", "TestForm\TestForm.csproj", "{4BD33BD9-00CF-4B27-A1FB-2DC4A0E505AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

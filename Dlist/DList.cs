@@ -849,7 +849,7 @@ namespace InCoding.DList
 
                 var HeaderBounds = (!ShowGrid) ? Bounds : new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height - 1);
 
-                HeaderRenderer.Draw(gfx, HeaderBounds, State, column.Name, ForegroundColor, BackgroundColor, HeaderSeparatorColor, HeaderReorderIndicatorColor, HeaderFont);
+                HeaderRenderer.Draw(gfx, HeaderBounds, State, column.Text, ForegroundColor, BackgroundColor, HeaderSeparatorColor, HeaderReorderIndicatorColor, HeaderFont);
 
                 Bounds.X += column.Width;
             }

@@ -4,3 +4,4 @@
 /TestForm/obj
 /.vs
 /packages
+*.csproj.user
