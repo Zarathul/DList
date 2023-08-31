@@ -17,6 +17,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace InCoding.DList
@@ -156,5 +157,21 @@ namespace InCoding.DList
                 eventTrigger(Args);
             }
         }
-    }
+
+		public static void ResetToDefaultColors(this Control control)
+		{
+			var Properties = control.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+			foreach (var property in Properties)
+			{
+				if (!property.Name.Contains("Color")) continue;
+
+				var Attribute = (DefaultValueAttribute)property.GetCustomAttribute(typeof(DefaultValueAttribute));
+                if (Attribute == null) continue;
+				
+                var DefaultValue = (Color)Attribute.Value;
+				property.SetValue(control, DefaultValue);
+			}
+		}
+	}
 }

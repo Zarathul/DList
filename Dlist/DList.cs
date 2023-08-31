@@ -77,6 +77,10 @@ namespace InCoding.DList
         private Color _SelectionRectangleColor = SystemColors.HotTrack;
         private Color _SelectionRectangleBorderColor = SystemColors.HotTrack;
         private Color _BorderColor = SystemColors.ControlDark;
+        
+        private Color _FocusRectangleForeColor = SystemColors.ControlText;
+        private Color _FocusRectangleBackColor = SystemColors.Control;
+        
         private Font _HeaderFont;
         private IHeaderRenderer _HeaderRenderer = new HeaderRenderer();
         private Func<object, (Color, Color)> _ItemColorEvaluator;
@@ -84,7 +88,6 @@ namespace InCoding.DList
         private Pen _SelectionRectanglePen;
         private Pen _BorderPen;
         private SolidBrush _SelectionRectangleBrush;
-        private SolidBrush _BackgroundBrush;
         private Rectangle _ContentRectangle;
 
         private bool IsFirstPaint = true;
@@ -130,10 +133,6 @@ namespace InCoding.DList
                 if (base.BackColor != value)
                 {
                     base.BackColor = value;
-
-                    _BackgroundBrush?.Dispose();
-                    _BackgroundBrush = new SolidBrush(value);
-
                     Invalidate();
                 }
             }
@@ -425,6 +424,36 @@ namespace InCoding.DList
             }
         }
 
+        [DefaultValue(typeof(Color), "ControlText")]
+        [Category("Appearance")]
+        public Color FocusRectangleForeColor
+		{
+            get => _FocusRectangleForeColor;
+            set
+            {
+                if (_FocusRectangleForeColor != value)
+                {
+					_FocusRectangleForeColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [DefaultValue(typeof(Color), "Control")]
+        [Category("Appearance")]
+        public Color FocusRectangleBackColor
+		{
+            get => _FocusRectangleBackColor;
+            set
+            {
+                if (_FocusRectangleBackColor != value)
+                {
+					_FocusRectangleBackColor = value;
+                    Invalidate();
+                }
+            }
+        }
+
         [DefaultValue(null)]
         [Category("Appearance")]
         public Font HeaderFont
@@ -524,6 +553,14 @@ namespace InCoding.DList
                 this._AllowMultipleSelectedItems = value;
             }
         }
+
+        [DefaultValue(false)]
+        [Category("Behavior")]
+        public bool AllowItemRemoval { get; set; } = false;
+
+        [DefaultValue(false)]
+        [Category("Behavior")]
+        public bool AllowItemRemovalWithDelKey { get; set; } = false;
 
         [Category("Data")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
@@ -671,7 +708,6 @@ namespace InCoding.DList
         protected Pen BorderPen { get => _BorderPen; }
 
         protected SolidBrush SelectionRectangleBrush { get => _SelectionRectangleBrush; }
-        protected SolidBrush BackgroundBrush { get => _BackgroundBrush; }
 
         protected override Size DefaultMinimumSize
         {
@@ -752,7 +788,6 @@ namespace InCoding.DList
             _SelectionRectanglePen = new Pen(_SelectionRectangleBorderColor);
             _BorderPen = new Pen(_BorderColor);
             _SelectionRectangleBrush = new SolidBrush(Color.FromArgb(_SelectionRectangleAlpha, _SelectionRectangleColor));
-            _BackgroundBrush = new SolidBrush(BackColor);
         }
 
         #region Drawing
@@ -776,7 +811,7 @@ namespace InCoding.DList
                 int FirstVisibleItemIndex = GetFirstVisibleItemIndex();
                 DrawItems(Gfx, FirstVisibleItemIndex);
 
-                if (FocusedItemIndex >= 0) DrawFocusRectangle(Gfx);
+                if ((FocusedItemIndex >= 0) && (Focused)) DrawFocusRectangle(Gfx);
                 if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx, ItemSelectionStart, ItemSelectionEnd);
             }
 
@@ -801,7 +836,7 @@ namespace InCoding.DList
 
         protected virtual Rectangle DrawBackground(Graphics gfx)
         {
-            gfx.FillRectangle(BackgroundBrush, ClientRectangle);
+            gfx.Clear(BackColor);
             gfx.DrawRectangle(BorderPen, ClientRectangle.ToGDI()); // @GDI
 
             return new Rectangle(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
@@ -984,7 +1019,7 @@ namespace InCoding.DList
             }
 
             var FocusBounds = new Rectangle(FocusPos, FocusSize);
-            ControlPaint.DrawFocusRectangle(gfx, FocusBounds);
+            ControlPaint.DrawFocusRectangle(gfx, FocusBounds, _FocusRectangleForeColor, _FocusRectangleBackColor);
         }
 
         protected virtual void DrawSelectionRectangle(Graphics gfx, Point start, Point end)
@@ -1138,6 +1173,8 @@ namespace InCoding.DList
 
         private bool HandleKeyDelete(Keys modifiers)
         {
+            if (!AllowItemRemovalWithDelKey) return false;
+
             RemoveSelectedItems();
 
             return true;
@@ -1676,8 +1713,29 @@ namespace InCoding.DList
         protected void ItemCollectionChanged(object sender, NotifyingCollectionChangedEventArgs e)
         {
             CancelCellEdit();
-            Select(-1);
-            _FocusedItemIndex = -1;
+            
+            // Correcting the selection of multiple items after the item collection changed seems error prone 
+            // and I'd rather not deal with that. But if there's just a single selection there's little reason 
+            // not to keep it if possible.
+            if (AllowMultipleSelectedItems)
+            {
+                if (SelectedItemIndices.Count > 1)
+                {
+					Select(-1);
+					_FocusedItemIndex = -1;
+				}
+                else if (SelectedItemIndices.Count == 1)
+                {
+					if (SelectedItemIndices[0] >= Items.Count) Select(-1);
+					if (_FocusedItemIndex >= Items.Count) _FocusedItemIndex = -1;
+				}
+			}
+            else
+            {
+				if (_SelectedItemIndex >= Items.Count) Select(-1);
+                if (_FocusedItemIndex >= Items.Count) _FocusedItemIndex = -1;
+			}
+			
             Invalidate();
         }
 
@@ -1930,6 +1988,10 @@ namespace InCoding.DList
                 EndSelectionRectangle();
             }
 
+            // The focus rectangle is no longer drawn if the control is not focused.
+            // So if it looses focus and there was a focused item, it needs to redraw.
+            if (_FocusedItemIndex >= 0) Invalidate();
+
             base.OnLostFocus(e);
         }
 
@@ -1978,7 +2040,6 @@ namespace InCoding.DList
                 _SelectionRectanglePen?.Dispose();
                 _BorderPen?.Dispose();
                 _SelectionRectangleBrush?.Dispose();
-                _BackgroundBrush?.Dispose();
             }
 
             base.Dispose(disposing);
@@ -2104,7 +2165,10 @@ namespace InCoding.DList
                 ? ItemBottom - VisibleBottom
                 : 0;
 
-            VScroll.Value += ScrollOffset;
+            int NewVScrollValue = VScroll.Value + ScrollOffset;
+            if ((NewVScrollValue < VScroll.Minimum) || (NewVScrollValue > VScroll.Maximum)) return;
+
+			VScroll.Value = NewVScrollValue;
         }
 
         public void EnsureColumnVisibility(int columnIndex)
@@ -2200,6 +2264,8 @@ namespace InCoding.DList
 
         public void RemoveSelectedItems()
         {
+            if (!AllowItemRemoval) return;
+
             if (AllowMultipleSelectedItems)
             {
                 Items.RemoveAtRange(SelectedItemIndices);
