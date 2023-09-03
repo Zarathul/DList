@@ -1981,6 +1981,15 @@ namespace InCoding.DList
             base.SetBoundsCore(x, y, width, height, specified);
         }
 
+        protected override void OnGotFocus(EventArgs e)
+        {
+            // If there is a focused item when the control gains focus
+            // it needs to redraw to show the focus rectangle.
+            if (_FocusedItemIndex >= 0) Invalidate();
+
+            base.OnGotFocus(e);
+        }
+
         protected override void OnLostFocus(EventArgs e)
         {
             if (AllowMultipleSelectedItems)
@@ -1988,7 +1997,7 @@ namespace InCoding.DList
                 EndSelectionRectangle();
             }
 
-            // The focus rectangle is no longer drawn if the control is not focused.
+            // The focus rectangle should not be drawn if the control is not focused.
             // So if it looses focus and there was a focused item, it needs to redraw.
             if (_FocusedItemIndex >= 0) Invalidate();
 
