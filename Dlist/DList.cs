@@ -90,7 +90,6 @@ namespace InCoding.DList
         private SolidBrush _SelectionRectangleBrush;
         private Rectangle _ContentRectangle;
 
-        private bool IsFirstPaint = true;
         private bool DoColumnResizeOnLeftMouseDown = false;
         private bool IsSelectedItemChangedEventActive = true;
         private int LastClickTimestamp = 0;
@@ -427,13 +426,13 @@ namespace InCoding.DList
         [DefaultValue(typeof(Color), "ControlText")]
         [Category("Appearance")]
         public Color FocusRectangleForeColor
-		{
+        {
             get => _FocusRectangleForeColor;
             set
             {
                 if (_FocusRectangleForeColor != value)
                 {
-					_FocusRectangleForeColor = value;
+                    _FocusRectangleForeColor = value;
                     Invalidate();
                 }
             }
@@ -442,13 +441,13 @@ namespace InCoding.DList
         [DefaultValue(typeof(Color), "Control")]
         [Category("Appearance")]
         public Color FocusRectangleBackColor
-		{
+        {
             get => _FocusRectangleBackColor;
             set
             {
                 if (_FocusRectangleBackColor != value)
                 {
-					_FocusRectangleBackColor = value;
+                    _FocusRectangleBackColor = value;
                     Invalidate();
                 }
             }
@@ -801,8 +800,9 @@ namespace InCoding.DList
             }
 
             var Gfx = e.Graphics;
-            _ContentRectangle = DrawBackground(Gfx);
+            _ContentRectangle = new Rectangle(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
 
+            DrawBackground(Gfx);
             UpdateScrollBars();
             Gfx.SetClip(_ContentRectangle);
 
@@ -811,7 +811,7 @@ namespace InCoding.DList
                 int FirstVisibleItemIndex = GetFirstVisibleItemIndex();
                 DrawItems(Gfx, FirstVisibleItemIndex);
 
-                if ((FocusedItemIndex >= 0) && (Focused)) DrawFocusRectangle(Gfx);
+                if ((FocusedItemIndex >= 0) && Focused) DrawFocusRectangle(Gfx);
                 if (!ItemSelectionStart.IsEmpty && !ItemSelectionEnd.IsEmpty) DrawSelectionRectangle(Gfx, ItemSelectionStart, ItemSelectionEnd);
             }
 
@@ -822,24 +822,12 @@ namespace InCoding.DList
             }
 
             base.OnPaint(e);
-
-            // This is necessary in integral height mode. Because the ContentRectangle is constructed here in 
-            // OnPaint() and when SetBoundsCore() is called the first few times, OnPaint() has not been called yet. 
-            // Therefore, the height calculation in SetBoundsCore() will fail. Just calling SetBoundsCore() once
-            // after the ContentRectangle has been created will fix this.
-            if (IsFirstPaint)
-            {
-                IsFirstPaint = false;
-                SetBoundsCore(Left, Top, Width, Height, BoundsSpecified.All);
-            }
         }
 
-        protected virtual Rectangle DrawBackground(Graphics gfx)
+        protected virtual void DrawBackground(Graphics gfx)
         {
             gfx.Clear(BackColor);
             gfx.DrawRectangle(BorderPen, ClientRectangle.ToGDI()); // @GDI
-
-            return new Rectangle(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
         }
 
         protected virtual void DrawHeaders(Graphics gfx)
@@ -1721,21 +1709,21 @@ namespace InCoding.DList
             {
                 if (SelectedItemIndices.Count > 1)
                 {
-					Select(-1);
-					_FocusedItemIndex = -1;
-				}
+                    Select(-1);
+                    _FocusedItemIndex = -1;
+                }
                 else if (SelectedItemIndices.Count == 1)
                 {
-					if (SelectedItemIndices[0] >= Items.Count) Select(-1);
-					if (_FocusedItemIndex >= Items.Count) _FocusedItemIndex = -1;
-				}
-			}
+                    if (SelectedItemIndices[0] >= Items.Count) Select(-1);
+                    if (_FocusedItemIndex >= Items.Count) _FocusedItemIndex = -1;
+                }
+            }
             else
             {
-				if (_SelectedItemIndex >= Items.Count) Select(-1);
+                if (_SelectedItemIndex >= Items.Count) Select(-1);
                 if (_FocusedItemIndex >= Items.Count) _FocusedItemIndex = -1;
-			}
-			
+            }
+            
             Invalidate();
         }
 
@@ -1867,6 +1855,7 @@ namespace InCoding.DList
 
             // Horizontal
             int TotalContentWidth = 0;
+            bool HScrollVisibleBefore = HScroll.Visible;
 
             foreach (var column in Columns)
             {
@@ -1911,6 +1900,11 @@ namespace InCoding.DList
             if (HScroll.Value > (HScroll.Maximum - HScroll.LargeChange + 1))
             {
                 HScroll.Value = HScroll.Maximum - HScroll.LargeChange + 1;
+            }
+
+            if (IntegralHeight && (HScroll.Visible != HScrollVisibleBefore))
+            {
+                SetBoundsCore(Left, Top, Width, Height, BoundsSpecified.Height);
             }
         }
         
@@ -2177,7 +2171,7 @@ namespace InCoding.DList
             int NewVScrollValue = VScroll.Value + ScrollOffset;
             if ((NewVScrollValue < VScroll.Minimum) || (NewVScrollValue > VScroll.Maximum)) return;
 
-			VScroll.Value = NewVScrollValue;
+            VScroll.Value = NewVScrollValue;
         }
 
         public void EnsureColumnVisibility(int columnIndex)
